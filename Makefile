@@ -5,6 +5,12 @@ OUT_DIR=bin
 BOOT_SRC_DIR=$(SRC_DIR)/boot
 KERNEL_SRC_SIR=$(SRC_DIR)/kernel
 
+run: image
+	qemu-system-i386 -monitor stdio bin/image.img
+
+debug: image
+	bochs -f bochs_config
+
 image: $(OUT_DIR)/main.img
 
 $(OUT_DIR)/main.img: bootloader kernel

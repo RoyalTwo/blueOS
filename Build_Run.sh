@@ -1,1 +1,0 @@
-make && qemu-system-i386 -hda bin/image.img
