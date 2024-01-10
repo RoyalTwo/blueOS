@@ -11,7 +11,7 @@ I started this project to learn about how operating systems work, low level conc
 ## Building
 So far, this has only been tested on Ubuntu running on Windows Subsystem for Linux 2.
 
-**Requirements**: QEMU, qemu-system-i386, bochs, bochsbios, vgabios, bochs-sdl2, bochs-wx
+**Requirements**: QEMU, qemu-system-i386, bochs, bochsbios, vgabios, bochs-sdl2, bochs-wx, grub-pc-bin, xorriso
 
 Once you have the necessary programs, there are two files that will build the OS image and run it for you:
 - Build_Run.sh - Builds the image and runs it through QEMU

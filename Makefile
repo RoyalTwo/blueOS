@@ -1,32 +1,25 @@
-ASM=nasm
+BOOT=src/boot/boot.asm
+KERNEL=src/kernel/kernel.c
+ISOFILE=bin/glados.iso
+ISO_VOLUME_NAME=GLADOS
+LINKER=src/linker.ld
+KERNEL_OUT=bin/glados.bin
 
-SRC_DIR=src
-OUT_DIR=bin
-BOOT_SRC_DIR=$(SRC_DIR)/boot
-KERNEL_SRC_SIR=$(SRC_DIR)/kernel
-
-run: image
-	qemu-system-i386 -monitor stdio bin/image.img
-
-debug: image
-	bochs -f bochs_config
-
-image: $(OUT_DIR)/main.img
-
-$(OUT_DIR)/main.img: bootloader kernel
-	dd if=/dev/zero of=$(OUT_DIR)/image.img bs=512 count=2880
-	mkfs.fat -F 12 -n "LOS" $(OUT_DIR)/image.img
-	dd if=$(OUT_DIR)/bootloader.bin of=$(OUT_DIR)/image.img conv=notrunc
-	mcopy -i $(OUT_DIR)/image.img $(OUT_DIR)/kernel.bin "::kernel.bin"
-
-bootloader: $(OUT_DIR)/bootloader.bin
-kernel: $(OUT_DIR)/kernel.bin
-
-$(OUT_DIR)/bootloader.bin: $(BOOT_SRC_DIR)/bootloader.asm
-	$(ASM) $(BOOT_SRC_DIR)/bootloader.asm -f bin -o $(OUT_DIR)/bootloader.bin
-
-$(OUT_DIR)/kernel.bin: $(KERNEL_SRC_SIR)/kernel.asm
-	$(ASM) $(KERNEL_SRC_SIR)/kernel.asm -f bin -o $(OUT_DIR)/kernel.bin
-
+all: build
+build: clean
+	mkdir -p bin
+	nasm -f elf32 ${BOOT} -o bin/boot.o
+	gcc -m32 -ffreestanding -c ${KERNEL} -o bin/kernel.o
+	ld -m elf_i386 -T ${LINKER} -o ${KERNEL_OUT} bin/boot.o bin/kernel.o
+run: build 
+	qemu-system-i386 -kernel ${KERNEL_OUT} -monitor stdio
+iso: build 
+	mkdir -p bin/iso/boot/grub
+	cp grub.cfg bin/iso/boot/grub
+	cp ${KERNEL_OUT} bin/iso/boot/grub
+	grub-mkrescue -o bin/glados.iso bin/iso
+	rm -rf bin/iso
+run-iso: iso
+	qemu-system-i386 -cdrom ${ISOFILE} 
 clean:
-	rm -rf $(OUT_DIR)/*
+	rm -rf build
