@@ -217,7 +217,7 @@ main:
     hlt
 
 read_success_msg: db "Disk read successful!", ENDL, 0
-read_failure_msg: db "Disk read failed! ", ENDL, 0
+read_failure_msg: db "Disk read failed!", ENDL, 0
 
 times 510-($-$$) db 0
 
