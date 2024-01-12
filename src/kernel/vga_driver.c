@@ -2,25 +2,27 @@
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
+char *VID_MEM = (char *)VID_MEM_START;
+
 uint8_t get_vga_color(VGA_COLOR foreground, VGA_COLOR background)
 {
     // Little-endian, background is lower half
     return foreground | background << 4;
 }
 
-void vga_clear_screen(char *display_mem, int color)
+void vga_clear_screen(uint8_t color)
 {
     int area = SCREEN_ROWS * SCREEN_COLS;
     for (int pos = 0; pos < area * 2; pos++)
     {
         // Video memory is two parts, character and color/attribute
-        display_mem[pos] = (uint8_t)' ';
-        display_mem[++pos] = color;
+        VID_MEM[pos] = (uint8_t)' ';
+        VID_MEM[++pos] = color;
     }
 }
 
 // Returns number of characters printed
-int vga_print(char *display_mem, char *input, uint8_t color, int pos)
+int vga_print(char *input, uint8_t color, int pos)
 {
     if (pos < 0)
         return 0;
@@ -33,9 +35,9 @@ int vga_print(char *display_mem, char *input, uint8_t color, int pos)
     char current = input[str_pos];
     while (current != '\0')
     {
-        display_mem[pos] = current;
+        VID_MEM[pos] = current;
         pos++;
-        display_mem[pos] = color;
+        VID_MEM[pos] = color;
         pos++;
         str_pos++;
         current = input[str_pos];

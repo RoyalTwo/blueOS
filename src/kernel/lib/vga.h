@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#define VID_MEM_START 0xb8000
 
 typedef enum VGA_COLOR
 {
@@ -22,5 +23,5 @@ typedef enum VGA_COLOR
 } VGA_COLOR;
 
 uint8_t get_vga_color(VGA_COLOR foreground, VGA_COLOR background);
-void vga_clear_screen(char *display_mem, int color);
-int vga_print(char *display_mem, char *input, uint8_t color, int pos);
+void vga_clear_screen(uint8_t color);
+int vga_print(char *input, uint8_t color, int pos);
