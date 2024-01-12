@@ -1,16 +1,21 @@
 BOOT=src/boot/boot.asm
-KERNEL=src/kernel/kernel.c
+KERNEL_DIR=src/kernel
+KERNEL_HEADER_DIR=src/kernel/lib
 ISOFILE=bin/glados.iso
-ISO_VOLUME_NAME=GLADOS
 LINKER=src/linker.ld
 KERNEL_OUT=bin/glados.bin
+COMPILER=i686-elf-gcc
+KERNEL_DIR=src/kernel
+KERNEL_FILES:=$(wildcard $(KERNEL_DIR)/*.c)
+OBJ_DIR=bin/objs
+OBJ_FILES=$(patsubst $(KERNEL_DIR)/%.c, $(OBJ_DIR)/%.o, $(KERNEL_FILES))
 
-all: build
-build: clean
-	mkdir -p bin
-	nasm -f elf32 ${BOOT} -o bin/boot.o
-	gcc -m32 -ffreestanding -c ${KERNEL} -o bin/kernel.o
-	ld -m elf_i386 -T ${LINKER} -o ${KERNEL_OUT} bin/boot.o bin/kernel.o
+all: build 
+build: $(OBJ_FILES)
+	nasm -f elf32 ${BOOT} -o $(OBJ_DIR)/boot.o
+	$(COMPILER) -ffreestanding -nostdlib -T $(LINKER) $^ $(OBJ_DIR)/boot.o -lgcc -o $(KERNEL_OUT) 
+$(OBJ_DIR)/%.o: $(KERNEL_DIR)/%.c
+	$(COMPILER) -ffreestanding -I$(KERNEL_HEADER_DIR) -c $< -o $@ 
 run: build 
 	qemu-system-i386 -kernel ${KERNEL_OUT} -monitor stdio
 iso: build 
@@ -21,5 +26,3 @@ iso: build
 	rm -rf bin/iso
 run-iso: iso
 	qemu-system-i386 -cdrom ${ISOFILE} 
-clean:
-	rm -rf build
