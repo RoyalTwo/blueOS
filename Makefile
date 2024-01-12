@@ -26,3 +26,6 @@ iso: build
 	rm -rf bin/iso
 run-iso: iso
 	qemu-system-i386 -cdrom ${ISOFILE} 
+# have to keep or it removes objs
+clean:
+	rm -rf build
