@@ -23,3 +23,4 @@ typedef enum VGA_COLOR
 
 uint8_t get_vga_color(VGA_COLOR foreground, VGA_COLOR background);
 void vga_clear_screen(char *display_mem, int color);
+int vga_print(char *display_mem, char *input, uint8_t color, int pos);

@@ -18,3 +18,27 @@ void vga_clear_screen(char *display_mem, int color)
         display_mem[++pos] = color;
     }
 }
+
+// Returns number of characters printed
+int vga_print(char *display_mem, char *input, uint8_t color, int pos)
+{
+    if (pos < 0)
+        return 0;
+    // if pos is not even, that's the color part of memory
+    if (pos % 2 != 0)
+        pos = pos - 1;
+    pos = pos * 2;
+
+    int str_pos = 0;
+    char current = input[str_pos];
+    while (current != '\0')
+    {
+        display_mem[pos] = current;
+        pos++;
+        display_mem[pos] = color;
+        pos++;
+        str_pos++;
+        current = input[str_pos];
+    }
+    return str_pos;
+}
