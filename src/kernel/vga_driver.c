@@ -1,4 +1,5 @@
 #include "vga.h"
+#include "utils.h"
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
@@ -21,26 +22,18 @@ void vga_clear_screen(uint8_t color)
     }
 }
 
-// Returns number of characters printed
-int vga_print(char *input, uint8_t color, int pos)
+void vga_print_at(char *input, uint8_t color, int pos)
 {
     if (pos < 0)
         return 0;
-    // if pos is not even, that's the color part of memory
-    if (pos % 2 != 0)
-        pos = pos - 1;
     pos = pos * 2;
 
-    int str_pos = 0;
-    char current = input[str_pos];
-    while (current != '\0')
+    size_t input_length = strlen(input);
+    for (int str_pos = 0; str_pos < input_length; str_pos++)
     {
-        VID_MEM[pos] = current;
+        VID_MEM[pos] = input[str_pos];
         pos++;
         VID_MEM[pos] = color;
         pos++;
-        str_pos++;
-        current = input[str_pos];
     }
-    return str_pos;
 }

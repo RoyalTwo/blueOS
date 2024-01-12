@@ -1,11 +1,10 @@
 #include <stdint.h>
 #include "vga.h"
+#include "terminal.h"
 
 void main()
 {
-    uint8_t term_color = get_vga_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-    vga_clear_screen(term_color);
-    uint8_t color = get_vga_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-    vga_print("Welcome to gladOS!", color, (11 * 80 + (40 - 9)));
-    vga_print("hello :D", color, 0);
+    uint8_t term_color = get_vga_color(VGA_COLOR_LIGHTRED, VGA_COLOR_DARKGRAY);
+    Terminal terminal = InitTerminal();
+    Term_PrintString(&terminal, "True!\nThis is new");
 }
