@@ -22,18 +22,13 @@ void vga_clear_screen(uint8_t color)
     }
 }
 
-void vga_print_at(char *input, uint8_t color, int pos)
+void vga_print_at(char input, uint8_t color, int pos)
 {
     if (pos < 0)
         return;
     pos = pos * 2;
 
-    size_t input_length = strlen(input);
-    for (int str_pos = 0; str_pos < input_length; str_pos++)
-    {
-        VID_MEM[pos] = input[str_pos];
-        pos++;
-        VID_MEM[pos] = color;
-        pos++;
-    }
+    VID_MEM[pos] = input;
+    pos++;
+    VID_MEM[pos] = color;
 }

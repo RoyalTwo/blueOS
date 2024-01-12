@@ -27,14 +27,11 @@ void term_reset_pos()
 void Term_SetColor(uint8_t color)
 {
     terminal.color = color;
-    vga_clear_screen(terminal.color);
-    term_reset_pos();
 }
 
 void term_put_char_at(char c, size_t x, size_t y)
 {
-    char arr[] = {c};
-    vga_print_at(arr, terminal.color, (y * SCREEN_COLS) + x);
+    vga_print_at(c, terminal.color, (y * SCREEN_COLS) + x);
     // Should probably update Terminal later, but how? Should position then be after inserted char?
 }
 
@@ -50,8 +47,7 @@ void term_put_char(char c)
             terminal.row = terminal.row + 1;
         return;
     }
-    char arr[] = {c};
-    vga_print_at(arr, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
+    vga_print_at(c, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
     if (terminal.column + 1 == SCREEN_COLS)
     {
         terminal.column = 0;

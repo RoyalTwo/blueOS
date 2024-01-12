@@ -1,9 +1,12 @@
 #include <stdint.h>
 #include "vga.h"
 #include "terminal.h"
+#include "shell.h"
 
 void main()
 {
-    Terminal *term_handle = InitTerminal();
+    InitTerminal();
     Term_PrintString("Kernel loaded!");
+    InitShell();
+    ShellHandleCommands();
 }
