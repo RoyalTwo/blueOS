@@ -4,8 +4,6 @@
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
-void test_main();
-
 // Returns number of characters printed
 int kprint(char *display_mem, char *input, int pos)
 {
