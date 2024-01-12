@@ -25,7 +25,7 @@ void vga_clear_screen(uint8_t color)
 void vga_print_at(char *input, uint8_t color, int pos)
 {
     if (pos < 0)
-        return 0;
+        return;
     pos = pos * 2;
 
     size_t input_length = strlen(input);

@@ -1,6 +1,6 @@
+#pragma once
 #include <stdint.h>
 #include <stddef.h>
-#pragma once
 
 typedef struct
 {
@@ -9,6 +9,6 @@ typedef struct
     uint8_t color;
 } Terminal;
 
-Terminal InitTerminal();
-void Term_SetColor(Terminal *term, uint8_t color);
-void Term_PrintString(Terminal *term, char *data);
+Terminal *InitTerminal();
+void Term_SetColor(uint8_t color);
+void Term_PrintString(char *data);
