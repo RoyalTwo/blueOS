@@ -5,5 +5,5 @@
 void main()
 {
     Terminal *term_handle = InitTerminal();
-    Term_PrintString("True!\nThis is new");
+    Term_PrintString("Kernel loaded!");
 }

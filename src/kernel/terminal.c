@@ -9,7 +9,7 @@ Terminal terminal;
 // Caps indicate public function
 Terminal *InitTerminal()
 {
-    uint8_t color = get_vga_color(VGA_COLOR_WHITE, VGA_COLOR_CYAN);
+    uint8_t color = get_vga_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     terminal.column = 0;
     terminal.row = 0;
     terminal.color = color;
