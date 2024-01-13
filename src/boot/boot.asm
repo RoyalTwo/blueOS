@@ -28,5 +28,6 @@ flush2:
 	ret
 
 section .bss
+align 16
 resb 8192			; 8KB for stack, reserves space (NASM command)
 stack_space:

@@ -9,7 +9,8 @@ void main()
 {
     InstallGDT();
     InitTerminal();
-    Term_PrintString("Kernel loaded!");
+    Term_PrintString("GDT installed!");
+    Term_PrintString("\nKernel loaded!");
     InitShell();
     ShellHandleCommands();
 }
@@ -86,7 +87,7 @@ void GDT_set_entry(int num, uint32_t base, uint32_t limit, uint8_t access, uint8
 void InstallGDT()
 {
     GDT_ptr.limit = (sizeof(struct GDT_Entry) * 3) - 1;
-    GDT_ptr.base = &GDT;
+    GDT_ptr.base = (unsigned int)&GDT;
 
     // NULL descriptor
     GDT_set_entry(0, 0, 0, 0, 0);
@@ -94,6 +95,7 @@ void InstallGDT()
     GDT_set_entry(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     // Data segment - exactly the same as code but the descriptor type in access says it's a data segment
     GDT_set_entry(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+    // TODO: Add TSS
 
     GDT_flush();
 }
