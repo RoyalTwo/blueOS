@@ -13,6 +13,19 @@ start:
 	mov esp, stack_space
 	call main
 	hlt
+global GDT_flush
+extern GDT_ptr
+GDT_flush:
+	lgdt [GDT_ptr]
+	mov ax, 0x10	; 0x10 is data segment
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax
+	jmp 0x08:flush2	; 0x08 is code segment, this flushes registers
+flush2:
+	ret
 
 section .bss
 resb 8192			; 8KB for stack, reserves space (NASM command)

@@ -3,8 +3,11 @@
 #include "terminal.h"
 #include "shell.h"
 
+void InstallGDT();
+
 void main()
 {
+    InstallGDT();
     InitTerminal();
     Term_PrintString("Kernel loaded!");
     InitShell();
@@ -28,11 +31,6 @@ unsigned char port_byte_in(unsigned short port)
 // Set a byte on the specified port
 void port_byte_out(unsigned short port, unsigned char data)
 {
-    /* Both registers are mapped to C variables and
-     * nothing is returned, thus, no equals '=' in the asm syntax
-     * However we see a comma since there are two variables in the input area
-     * and none in the 'return' area
-     */
     __asm__("out %%al, %%dx" : : "a"(data), "d"(port));
 }
 
@@ -46,4 +44,56 @@ unsigned short port_word_in(unsigned short port)
 void port_word_out(unsigned short port, unsigned short data)
 {
     __asm__("out %%ax, %%dx" : : "a"(data), "d"(port));
+}
+
+// GDT
+struct GDT_Entry
+{
+    uint16_t limit_low;
+    uint16_t base_low;
+    uint8_t base_mid;
+    uint8_t access;
+    uint8_t granularity; // Contains limit_high AND flags
+    uint8_t base_high;
+} __attribute__((packed));
+
+struct GDT_Descriptor
+{
+    uint16_t limit;
+    unsigned int base;
+} __attribute__((packed));
+
+struct GDT_Entry GDT[3]; // The GDT
+struct GDT_Descriptor GDT_ptr;
+extern void GDT_flush(); // defined in boot.asm
+
+void GDT_set_entry(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
+{
+    // Setup base address
+    GDT[num].base_low = (base & 0xFFFF);
+    GDT[num].base_mid = (base >> 16) & 0xFF;
+    GDT[num].base_high = (base >> 24) & 0xFF;
+
+    // Setup limits
+    GDT[num].limit_low = (limit & 0xFFFF);
+    GDT[num].granularity = ((limit >> 16) & 0x0F);
+
+    // Setup granularity and access flags
+    GDT[num].granularity |= (gran & 0xF0);
+    GDT[num].access = access;
+}
+
+void InstallGDT()
+{
+    GDT_ptr.limit = (sizeof(struct GDT_Entry) * 3) - 1;
+    GDT_ptr.base = &GDT;
+
+    // NULL descriptor
+    GDT_set_entry(0, 0, 0, 0, 0);
+    // Code segment - index is 1, base address is 0, limit is 4 GB, access bit is ring 0, code, flags are set to 4 KB blocks using 32-bit
+    GDT_set_entry(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
+    // Data segment - exactly the same as code but the descriptor type in access says it's a data segment
+    GDT_set_entry(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+
+    GDT_flush();
 }
