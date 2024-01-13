@@ -22,6 +22,7 @@ void term_reset_pos()
 {
     terminal.column = 0;
     terminal.row = 0;
+    set_cursor_pos(0);
 }
 
 void Term_SetColor(uint8_t color)
@@ -45,6 +46,7 @@ void term_put_char(char c)
             terminal.row = 0;
         else
             terminal.row = terminal.row + 1;
+        set_cursor_pos((terminal.row - 1) * SCREEN_COLS);
         return;
     }
     vga_print_at(c, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
@@ -72,6 +74,7 @@ void term_write(char *data, size_t size)
     {
         term_put_char(data[i]);
     }
+    set_cursor_pos((terminal.row * SCREEN_COLS) + terminal.column);
 }
 
 void Term_PrintString(char *data)

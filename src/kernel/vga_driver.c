@@ -2,6 +2,15 @@
 #include "utils.h"
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
+#define SCREEN_MEM_CTRL 0x3d4
+#define SCREEN_MEM_DATA 0x3d5
+
+// Defined in kernel.c
+
+unsigned char port_byte_in(unsigned short port);
+void port_byte_out(unsigned short port, unsigned char data);
+unsigned short port_word_in(unsigned short port);
+void port_word_out(unsigned short port, unsigned short data);
 
 char *VID_MEM = (char *)VID_MEM_START;
 
@@ -31,4 +40,27 @@ void vga_print_at(char input, uint8_t color, int pos)
     VID_MEM[pos] = input;
     pos++;
     VID_MEM[pos] = color;
+}
+
+int get_cursor_pos()
+{
+    /* Screen cursor position: ask VGA control register (0x3d4) for bytes
+     * 14 = high byte of cursor and 15 = low byte of cursor. */
+    port_byte_out(SCREEN_MEM_CTRL, 14); /* Requesting byte 14: high byte of cursor pos */
+    /* Data is returned in VGA data register (0x3d5) */
+    int position = port_byte_in(SCREEN_MEM_DATA);
+    position = position << 8; /* high byte */
+
+    port_byte_out(SCREEN_MEM_CTRL, 15); /* requesting low byte */
+    position += port_byte_in(SCREEN_MEM_DATA);
+    return position * 2; // Times 2 because 2 is size of each VGA cell (character and attributes)
+}
+void set_cursor_pos(int offset)
+{
+    port_byte_out(SCREEN_MEM_CTRL, 14);
+    // Set high byte (bitshifted because we previously bitshifted to get cursor pos)
+    port_byte_out(SCREEN_MEM_DATA, (unsigned char)(offset >> 8));
+    port_byte_out(SCREEN_MEM_CTRL, 15);
+    // Set low byte
+    port_byte_out(SCREEN_MEM_DATA, (unsigned char)(offset & 0xff));
 }

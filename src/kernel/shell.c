@@ -16,7 +16,7 @@ void ShellHandleCommands()
 
 void sh_newline()
 {
-    uint8_t new_color = get_vga_color(VGA_COLOR_LIGHTCYAN, VGA_COLOR_BLACK);
+    uint8_t new_color = get_vga_color(VGA_COLOR_YELLOW, VGA_COLOR_BLACK);
     Term_SetColor(new_color);
     Term_PrintString("\nOS> ");
     uint8_t old_color = get_vga_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
