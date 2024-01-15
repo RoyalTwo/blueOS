@@ -66,6 +66,7 @@ void term_put_char(char c)
     {
         terminal.column++;
     }
+    set_cursor_pos((terminal.row * SCREEN_COLS) + terminal.column);
 }
 
 void term_write(char *data, size_t size)
@@ -74,7 +75,6 @@ void term_write(char *data, size_t size)
     {
         term_put_char(data[i]);
     }
-    set_cursor_pos((terminal.row * SCREEN_COLS) + terminal.column);
 }
 
 void Term_PrintString(char *data)

@@ -5,6 +5,7 @@ Right now, the kernel is being loaded with GRUB in 32-bit protected mode. I've w
 Currently, there is a VGA driver and terminal driver implemented with a **super** basic shell. The kernel loads these and prints some things to the screen, along with loading a Global Descriptor Table.
 
 Future tasks:
+- [x] printf implementation
 - [ ] Interrupt Descriptor Table
 - [ ] Keyboard Input
 - [ ] File system (FAT32)

@@ -2,6 +2,7 @@
 #include "vga.h"
 #include "terminal.h"
 #include "shell.h"
+#include "stdio.h"
 
 void InstallGDT();
 
@@ -9,8 +10,9 @@ void main()
 {
     InstallGDT();
     InitTerminal();
-    Term_PrintString("Kernel loaded!");
-    Term_PrintString("\nGDT installed!");
+    printf("Installed GDT!");
+    printf("\n");
+    printf("Kernel loaded!");
     InitShell();
     ShellHandleCommands();
 }
