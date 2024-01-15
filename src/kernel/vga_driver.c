@@ -1,16 +1,10 @@
 #include "vga.h"
 #include "utils.h"
+#include "io.h"
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 #define SCREEN_MEM_CTRL 0x3d4
 #define SCREEN_MEM_DATA 0x3d5
-
-// Defined in kernel.c
-
-unsigned char port_byte_in(unsigned short port);
-void port_byte_out(unsigned short port, unsigned char data);
-unsigned short port_word_in(unsigned short port);
-void port_word_out(unsigned short port, unsigned short data);
 
 char *VID_MEM = (char *)VID_MEM_START;
 
