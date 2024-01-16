@@ -6,7 +6,7 @@
 #define SCREEN_MEM_CTRL 0x3d4
 #define SCREEN_MEM_DATA 0x3d5
 
-char *VID_MEM = (char *)VID_MEM_START;
+static char *VID_MEM = (char *)VID_MEM_START;
 
 uint8_t get_vga_color(VGA_COLOR foreground, VGA_COLOR background)
 {

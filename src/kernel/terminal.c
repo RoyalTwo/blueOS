@@ -4,6 +4,8 @@
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
+static char *VID_MEM = (char *)VID_MEM_START;
+
 Terminal terminal;
 
 // Caps indicate public function
@@ -35,8 +37,6 @@ void term_put_char_at(char c, size_t x, size_t y)
     vga_print_at(c, terminal.color, (y * SCREEN_COLS) + x);
     // Should probably update Terminal later, but how? Should position then be after inserted char?
 }
-
-void term_scroll();
 
 void term_put_char(char c)
 {
