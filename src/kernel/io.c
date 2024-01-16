@@ -31,3 +31,9 @@ void port_word_out(unsigned short port, unsigned short data)
 {
     __asm__("out %%ax, %%dx" : : "a"(data), "d"(port));
 }
+
+// Waits a very small amount of time by doing an IO operation on unused port
+void io_wait(void)
+{
+    port_byte_out(0x80, 0);
+}

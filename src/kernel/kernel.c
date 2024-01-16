@@ -3,6 +3,8 @@
 #include "terminal.h"
 #include "shell.h"
 #include "stdio.h"
+#include "idt.h"
+#include "timer.h"
 
 void InstallGDT();
 
@@ -10,11 +12,13 @@ void main()
 {
     InstallGDT();
     InitTerminal();
+    InstallIDT();
     printf("Installed GDT!");
     printf("\n");
     printf("Kernel loaded!");
-    InitShell();
+    printf("\n");
     ShellHandleCommands();
+    __asm__("sti");
 }
 
 // GDT

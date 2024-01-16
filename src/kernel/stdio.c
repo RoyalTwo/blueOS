@@ -14,6 +14,7 @@ int *printf_num(int *argp, int length, int radix);
 // Specifiers: %c, %s, %d, %x
 void __attribute__((cdecl)) printf(const char *fmt, ...)
 {
+    // TODO: Switch to VA_ARGS
     int *argp = (int *)(int *)&fmt;
     // IMPORTANT: This only handles near pointers. Should divide sizeof(fmt) by sizeof(int) to handle far pointers
     argp++; // Point to next argument after fmt

@@ -1,0 +1,7 @@
+megs: 128
+romimage: file=/usr/share/bochs/BIOS-bochs-legacy
+vgaromimage: file=/usr/share/bochs/VGABIOS-lgpl-latest
+ata0-slave: type=cdrom, path=bin/glados.iso, status=inserted
+boot: cdrom
+mouse: enabled=0
+display_library: sdl2, options="gui_debug"

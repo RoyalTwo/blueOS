@@ -13,6 +13,7 @@ start:
 	mov esp, stack_space
 	call main
 	hlt
+
 global GDT_flush
 extern GDT_ptr
 GDT_flush:
@@ -26,7 +27,6 @@ GDT_flush:
 	jmp 0x08:flush2	; 0x08 is code segment, this flushes registers
 flush2:
 	ret
-
 section .bss
 align 16
 resb 8192			; 8KB for stack, reserves space (NASM command)
