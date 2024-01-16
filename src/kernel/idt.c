@@ -76,18 +76,18 @@ void isr_handler(registers_t regs)
         Term_SetColor(white_on_black);
         printf(" - %s", exception_messages[regs.int_no]);
         printf("\nSystem halted!");
-        printf("\n%d", regs.eip);
+        printf("\n%d:%d", regs.cs, regs.eip);
         for (;;)
             ;
     }
 }
 
-// isr_t interrupt_handlers[256];
+isr_t interrupt_handlers[256];
 
-// void register_interrupt_handler(uint8_t index, isr_t handler)
-// {
-//     interrupt_handlers[index] = handler;
-// }
+void register_interrupt_handler(uint8_t index, isr_t handler)
+{
+    interrupt_handlers[index] = handler;
+}
 
 void irq_handler(registers_t regs)
 {
@@ -99,12 +99,12 @@ void irq_handler(registers_t regs)
     }
     port_byte_out(0x20, 0x20);
 
-    // if (interrupt_handlers[regs.int_no] != 0)
-    // {
-    //     // There's a function to handle it
-    //     isr_t handler = interrupt_handlers[regs.int_no];
-    //     handler(regs);
-    // }
+    if (interrupt_handlers[regs.int_no] != 0)
+    {
+        // There's a function to handle it
+        isr_t handler = interrupt_handlers[regs.int_no];
+        handler(regs);
+    }
 }
 
 struct IDT_Entry

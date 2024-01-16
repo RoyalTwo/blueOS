@@ -36,6 +36,8 @@ void term_put_char_at(char c, size_t x, size_t y)
     // Should probably update Terminal later, but how? Should position then be after inserted char?
 }
 
+void term_scroll();
+
 void term_put_char(char c)
 {
     if ((int)c == 10)
@@ -50,6 +52,8 @@ void term_put_char(char c)
         return;
     }
     vga_print_at(c, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
+
+    // Cursor position
     if (terminal.column + 1 == SCREEN_COLS)
     {
         terminal.column = 0;

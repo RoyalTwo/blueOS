@@ -16,9 +16,16 @@ void main()
     printf("Installed GDT!");
     printf("\n");
     printf("Kernel loaded!");
-    printf("\n");
+    InitShell();
     ShellHandleCommands();
-    __asm__("sti");
+    __asm__ volatile("sti");
+    InitTimer(10);
+
+    // We never want to return from our kernel
+    while (1)
+    {
+        __asm__ volatile("hlt");
+    }
 }
 
 // GDT

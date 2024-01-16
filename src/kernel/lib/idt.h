@@ -29,5 +29,5 @@ typedef struct registers
     uint32_t eip, cs, eflags, useresp, ss;           // Pushed by CPU automatically
 } registers_t;
 
-// typedef void (*isr_t)(registers_t);
-// void register_interrupt_handler(uint8_t index, isr_t handler);
+typedef void (*isr_t)(registers_t);
+void register_interrupt_handler(uint8_t index, isr_t handler);

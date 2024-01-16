@@ -27,7 +27,7 @@ iso: build
 run-iso: iso
 	qemu-system-i386 -cdrom ${ISOFILE} 
 debug-iso: iso
-	qemu-system-i386 -s -S -cdrom $(ISOFILE)
+	qemu-system-i386 -d int -D qemulog.txt -M smm=off -s -S -cdrom $(ISOFILE)
 # have to keep or it removes objs
 clean:
 	rm -rf build

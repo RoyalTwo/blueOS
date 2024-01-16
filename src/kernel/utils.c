@@ -9,3 +9,11 @@ size_t strlen(char *data)
     }
     return length;
 }
+
+void memory_copy(char *source, char *destination, int nbytes)
+{
+    for (int i = 0; i < nbytes; i++)
+    {
+        *(destination + i) = *(source + i);
+    }
+}
