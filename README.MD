@@ -1,4 +1,4 @@
-# gladOS
+# blueOS
 #### A custom 32-bit operating system built from scratch for the x86 architecture.
 Right now, the kernel is being loaded with GRUB in 32-bit protected mode. I've written a custom bootloader in assembly with disk loading and conversion from LBA to CHS, but opted to switch to GRUB afterwards since I built it for learning and wanted to focus primarily on the kernel. You can still find the custom bootloader in archive/, it also uses a FAT12 file system.
 
