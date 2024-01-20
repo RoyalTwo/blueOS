@@ -6,7 +6,7 @@ Currently, there is a VGA driver and terminal driver implemented with a **super*
 
 Future tasks:
 - [x] printf implementation
-- [ ] Interrupt Descriptor Table
+- [x] Interrupt Descriptor Table
 - [ ] Keyboard Input
 - [ ] File system (FAT32)
 - [ ] Paging
