@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "vga.h"
 #include "terminal.h"
-#include "shell.h"
 #include "stdio.h"
 #include "idt.h"
 #include "timer.h"
@@ -13,11 +12,8 @@ void main()
     InstallGDT();
     InitTerminal();
     InstallIDT();
-    printf("Installed GDT!");
-    printf("\n");
-    printf("Kernel loaded!");
-    InitShell();
-    ShellHandleCommands();
+    printf("Installed GDT!\n");
+    printf("Kernel loaded!\n");
     __asm__ volatile("sti");
     InitTimer(10);
 

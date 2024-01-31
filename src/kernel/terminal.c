@@ -1,6 +1,7 @@
 #include "terminal.h"
 #include "vga.h"
 #include "utils.h"
+#include "stdio.h"
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
@@ -27,15 +28,26 @@ void term_reset_pos()
     set_cursor_pos(0);
 }
 
+int get_offset(size_t column, size_t row)
+{
+    return (SCREEN_COLS * row) + column;
+}
+
+void term_scroll()
+{
+    for (int i = 0; i < SCREEN_ROWS; i++)
+    {
+        char *below_row = (char *)(VID_MEM_START + (2 * (get_offset(0, i + 1))));
+        char *above_row = (char *)(VID_MEM_START + (2 * (get_offset(0, i))));
+        memory_copy(below_row, above_row, SCREEN_COLS * 2);
+    }
+    char *last_row = (char *)(VID_MEM_START + (2 * (get_offset(0, SCREEN_ROWS - 1))));
+    for (int i = 0; i < SCREEN_COLS; i++)
+        last_row[i] = 0;
+}
 void Term_SetColor(uint8_t color)
 {
     terminal.color = color;
-}
-
-void term_put_char_at(char c, size_t x, size_t y)
-{
-    vga_print_at(c, terminal.color, (y * SCREEN_COLS) + x);
-    // Should probably update Terminal later, but how? Should position then be after inserted char?
 }
 
 void term_put_char(char c)
@@ -44,32 +56,26 @@ void term_put_char(char c)
     {
         // New line character
         terminal.column = 0;
-        if (terminal.row + 1 == SCREEN_ROWS)
-            terminal.row = 0;
-        else
-            terminal.row = terminal.row + 1;
-        set_cursor_pos((terminal.row - 1) * SCREEN_COLS);
-        return;
-    }
-    vga_print_at(c, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
-
-    // Cursor position
-    if (terminal.column + 1 == SCREEN_COLS)
-    {
-        terminal.column = 0;
-        if (terminal.row + 1 == SCREEN_ROWS)
-        {
-            terminal.row = 0;
-        }
-        else
-        {
-            terminal.row++;
-        }
+        terminal.row++;
     }
     else
     {
+        vga_print_at(c, terminal.color, (terminal.row * SCREEN_COLS) + terminal.column);
         terminal.column++;
     }
+
+    // Handle going to new line
+    if (terminal.column == SCREEN_COLS)
+    {
+        terminal.column = 0;
+        terminal.row++;
+    }
+    if (terminal.row == SCREEN_ROWS)
+    {
+        term_scroll();
+        terminal.row--;
+    }
+    // TODO: Shouldn't set cursor pos on every character
     set_cursor_pos((terminal.row * SCREEN_COLS) + terminal.column);
 }
 
