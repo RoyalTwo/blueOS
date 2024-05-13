@@ -1,4 +1,8 @@
-int main(void)
+#include "terminal.h"
+
+void kernel_main(void)
 {
-    return 12;
+    terminal_initialize();
+    terminal_writestring("Terminal Initialized\n");
+    terminal_writestring("Kernel Loaded\n");
 }

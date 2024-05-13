@@ -10,3 +10,8 @@
     - If I do just slam the kernel onto the same disk, I need to write a file system later and the bootloader will have to read it (at least enough to load second stage)
     - Reading some online resources, it seems I'm right, most of the time the bootloader is NOT linked with the kernel
         - This means I don't have to worry about linking until I'm linking the kernel together
+
+- I should eventually switch to UEFI
+    - This will help for memory maps and such
+
+- Had to switch to x86 instead of x64
