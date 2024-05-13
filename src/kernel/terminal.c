@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "util.h"
+#include "utils.h"
 #include "vga.h"
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)

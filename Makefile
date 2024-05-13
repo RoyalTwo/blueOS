@@ -9,7 +9,7 @@ BOOT_FILE := src/boot.s
 INCLUDE_DIR := src/kernel/include/
 TEMP_DIR := bin/temp
 
-OUT_BIN_FILE := bin/temp/blueOS.bin
+OUT_BIN_FILE := bin/temp/blueOS.elf
 OUT_ISO_FILE := bin/blueOS.iso
 
 SOURCES := $(wildcard $(KERNEL_DIR)/*.c)
@@ -31,7 +31,7 @@ build: $(OBJECTS_WITH_BOOT)
 	$(GCC) $(C_LINK_FLAGS) -o $(OUT_BIN_FILE) $^
 
 iso: build
-	cp $(OUT_BIN_FILE) isodir/boot/blueOS.bin
+	cp $(OUT_BIN_FILE) isodir/boot/blueOS.elf
 	grub-mkrescue -o $(OUT_ISO_FILE) isodir
 
 qemu: iso
