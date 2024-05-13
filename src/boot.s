@@ -33,6 +33,12 @@ global _start:function (_start.end - _start)
 _start:
     ; Setup stack
 	mov esp, stack_top
+
+    ; Reset unimportant registers
+    xor ecx, ecx
+    mov es, bx
+    mov fs, bx
+    mov gs, bx
  
 	; This is a good place to initialize crucial processor state before the
 	; high-level kernel is entered. The GDT should be loaded here. Paging should be enabled here.
