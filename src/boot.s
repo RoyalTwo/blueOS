@@ -24,8 +24,8 @@ section .text
 global _start:function (_start.end - _start)
 _start:
     ; Setup stack
-	mov esp, stack_top
-	mov ebp, esp
+	mov ebp, stack_top
+	mov esp, ebp
 
     ; Reset unimportant registers
     xor ecx, ecx
