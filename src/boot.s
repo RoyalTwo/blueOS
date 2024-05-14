@@ -25,6 +25,7 @@ global _start:function (_start.end - _start)
 _start:
     ; Setup stack
 	mov esp, stack_top
+	mov ebp, esp
 
     ; Reset unimportant registers
     xor ecx, ecx
