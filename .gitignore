@@ -9,3 +9,5 @@ obj/*
 
 iso_root/
 iso_root/*
+
+.DS_Store

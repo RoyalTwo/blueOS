@@ -1,44 +1,30 @@
-# Nuke built-in rules and variables.
+# Remove built-in rules and variables
 override MAKEFLAGS += -rR
 
-# This is the name that our final kernel executable will have.
+# Name of final executable
 override KERNEL := blueOS
 
-# Convenience macro to reliably declare user overridable variables.
-define DEFAULT_VAR =
-    ifeq ($(origin $1),default)
-        override $(1) := $(2)
-    endif
-    ifeq ($(origin $1),undefined)
-        override $(1) := $(2)
-    endif
-endef
+# A cross compiler is required. Since I am currently building on MacOS, I installed one with Homebrew.
+# This will need to be changed with Windows though, to use a cross compiler not within the PATH.
+# TODO:
+override KCC := x86_64-elf-gcc
 
-# It is suggested to use a custom built cross toolchain to build a kernel.
-# We are using the standard "cc" here, it may work by using
-# the host system's toolchain, but this is not guaranteed.
-override DEFAULT_KCC := compiler/bin/x86_64-elf-gcc
-$(eval $(call DEFAULT_VAR,KCC,$(DEFAULT_KCC)))
+# Changeable C flags
+override KCFLAGS := -g -O2 -pipe
 
-# User controllable C flags.
-override DEFAULT_KCFLAGS := -g -O2 -pipe
-$(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
+# Changeable C preprocessor flags
+override KCPPFLAGS :=
 
-# User controllable C preprocessor flags. We set none by default.
-override DEFAULT_KCPPFLAGS :=
-$(eval $(call DEFAULT_VAR,KCPPFLAGS,$(DEFAULT_KCPPFLAGS)))
+# Changeable NASM flags
+override KNASM_FLAGS := -F dwarf -g
 
-# User controllable nasm flags.
-override DEFAULT_KNASMFLAGS := -F dwarf -g
-$(eval $(call DEFAULT_VAR,KNASMFLAGS,$(DEFAULT_KNASMFLAGS)))
+# Changeable linker flags
+override KLDFLAGS :=
 
-# User controllable linker flags. We set none by default.
-override DEFAULT_KLDFLAGS :=
-$(eval $(call DEFAULT_VAR,KLDFLAGS,$(DEFAULT_KLDFLAGS)))
-
+# Include directory for kernel. TODO: Use more robust system for folder separation
 override INCLUDE_DIR := src/kernel/include/
 
-# Internal C flags that should not be changed by the user.
+# Internal C flags, should NOT be changed
 override KCFLAGS += \
     -Wall \
     -Wextra \
@@ -55,14 +41,14 @@ override KCFLAGS += \
     -mno-sse2 \
     -mno-red-zone
 
-# Internal C preprocessor flags that should not be changed by the user.
+# Internal C preprocessor flags, should NOT be changed
 override KCPPFLAGS := \
     -I $(INCLUDE_DIR) \
     $(KCPPFLAGS) \
     -MMD \
     -MP
 
-# Internal linker flags that should not be changed by the user.
+# Internal linker flags, should NOT be changed
 override KLDFLAGS += \
     -nostdlib \
     -Wl,-m,elf_x86_64 \
@@ -72,20 +58,20 @@ override KLDFLAGS += \
     -Wl,-z,max-page-size=0x1000 \
     -Wl,-T,linker.ld
 
-# Internal nasm flags that should not be changed by the user.
+# Internal NASM flags, should NOT be changed
 override KNASMFLAGS += \
     -Wall \
     -f elf64
 
-# Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
-# object and header dependency file names.
+# Uses "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
+# object and header dependency file names
 override CFILES := $(shell cd src && find -L * -type f -name '*.c')
 override ASFILES := $(shell cd src && find -L * -type f -name '*.S')
 override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm')
 override OBJ := $(addprefix obj/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(NASMFILES:.asm=.asm.o))
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
-# Default target.
+# Default target
 .PHONY: all
 all: bin/$(KERNEL)
 
@@ -94,33 +80,33 @@ src/kernel/limine.h:
 
 # Link rules for the final kernel executable.
 # The magic printf/dd command is used to force the final ELF file type to ET_DYN.
-# GNU binutils, for silly reasons, forces the ELF type to ET_EXEC even for
+# GNU binutils currently forces the ELF type to ET_EXEC even for
 # relocatable PIEs, if the base load address is non-0.
-# See https://sourceware.org/bugzilla/show_bug.cgi?id=31795 for more information.
+# See https://sourceware.org/bugzilla/show_bug.cgi?id=31795 for more information
 bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(OBJ) $(KLDFLAGS) -o $@
-	printf '\003' | dd of=$@ bs=1 count=1 seek=16 conv=notrunc 2>/dev/null
+    printf '\003' | dd of=$@ bs=1 count=1 seek=16 conv=notrunc 2>/dev/null
 
 # Include header dependencies.
 -include $(HEADER_DEPS)
 
-# Compilation rules for *.c files.
+# Compilation rules for *.c files
 obj/kernel/%.c.o: src/kernel/%.c GNUmakefile src/kernel/include/limine.h
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
-# Compilation rules for *.S files.
+# Compilation rules for *.S files
 obj/kernel/%.S.o: src/kernel/%.S GNUmakefile
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
-# Compilation rules for *.asm (nasm) files.
+# Compilation rules for *.asm (nasm) files
 obj/kernel/%.asm.o: src/kernel/%.asm GNUmakefile
 	mkdir -p "$$(dirname $@)"
 	nasm $(KNASMFLAGS) $< -o $@
 
-# Remove object files and the final executable.
+# Remove object files and the final executable
 .PHONY: clean
 clean:
 	rm -rf bin obj iso_root limine

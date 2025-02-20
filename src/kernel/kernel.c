@@ -23,6 +23,29 @@ static void halt(void)
     }
 }
 
+void putpixel(struct limine_framebuffer *framebuffer, int x, int y)
+{
+    volatile uint32_t *fb_ptr = framebuffer->address;
+    fb_ptr[(x) + (y * (framebuffer->width))] = 0xffffff;
+}
+
+void drawsquare(struct limine_framebuffer *fb, int x, int y, int length)
+{
+    volatile uint32_t *fb_ptr = fb->address;
+    for (int i = 0; i < length; i++)
+    {
+        for (int j = 0; j < length; j++)
+        {
+            fb_ptr[(j) + (i * fb->width) + (x) + (y * fb->width)] = 0xffffffff;
+        }
+    }
+}
+
+void putc(struct limine_framebuffer *fb, char c)
+{
+    // Start at just 0, 0
+}
+
 // Kernel entry point
 void kmain(void)
 {
@@ -42,11 +65,8 @@ void kmain(void)
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    for (size_t i = 0; i < 1000; i++)
-    {
-        volatile uint32_t *fb_ptr = framebuffer->address;
-        fb_ptr[i * (framebuffer->pitch / 4) + i] = 0xffffff;
-    }
+    drawsquare(framebuffer, 10, 10, 200);
+    drawsquare(framebuffer, 10, 220, 200);
 
     // Kernel should never exit
     halt();
