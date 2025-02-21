@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "limine.h"
+#include "graphics.h"
 
 // Set base revision to 2, recommended version
 __attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(2);
@@ -23,29 +24,6 @@ static void halt(void)
     }
 }
 
-void putpixel(struct limine_framebuffer *framebuffer, int x, int y)
-{
-    volatile uint32_t *fb_ptr = framebuffer->address;
-    fb_ptr[(x) + (y * (framebuffer->width))] = 0xffffff;
-}
-
-void drawsquare(struct limine_framebuffer *fb, int x, int y, int length)
-{
-    volatile uint32_t *fb_ptr = fb->address;
-    for (int i = 0; i < length; i++)
-    {
-        for (int j = 0; j < length; j++)
-        {
-            fb_ptr[(j) + (i * fb->width) + (x) + (y * fb->width)] = 0xffffffff;
-        }
-    }
-}
-
-void putc(struct limine_framebuffer *fb, char c)
-{
-    // Start at just 0, 0
-}
-
 // Kernel entry point
 void kmain(void)
 {
@@ -63,10 +41,22 @@ void kmain(void)
 
     // Fetch the first framebuffer
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    gpu_init(framebuffer);
 
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    drawsquare(framebuffer, 10, 10, 200);
-    drawsquare(framebuffer, 10, 220, 200);
+    if (framebuffer->bpp == (uint16_t)32)
+    {
+        // alpha? red, green, blue
+        draw_square(20, 500, 20, 0x00ffffff);
+        draw_square(25, 505, 10, 0x00ff0000);
+    }
+    for (int loop = 0; loop < 10; loop++)
+    {
+        for (int i = 0x41; i < 0x5B; i++)
+        {
+            putc((char)i);
+        }
+    }
 
     // Kernel should never exit
     halt();
