@@ -50,13 +50,9 @@ void kmain(void)
         draw_square(20, 500, 20, 0x00ffffff);
         draw_square(25, 505, 10, 0x00ff0000);
     }
-    for (int loop = 0; loop < 10; loop++)
-    {
-        for (int i = 0x41; i < 0x5B; i++)
-        {
-            putc((char)i);
-        }
-    }
+    char *my_string = "Hello, world!\nThis is text!";
+    puts(my_string);
+    puts("How are you?");
 
     // Kernel should never exit
     halt();

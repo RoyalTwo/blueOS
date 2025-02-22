@@ -1,4 +1,5 @@
 #include "limine.h"
+#include "kstring.h"
 #include <stdint.h>
 
 static uint8_t *font(char c)
@@ -180,6 +181,12 @@ void putc(char c)
         main_screen.textPosY++;
         main_screen.textPosX = 0;
     }
+    if (c == '\n')
+    {
+        main_screen.textPosY++;
+        main_screen.textPosX = 0;
+        return; // Early return because we're not actually printing anything
+    }
     volatile int offset = 0;
     offset = offset + main_screen.textPosX * CHAR_PIXEL_WIDTH;
     offset = offset + main_screen.textPosY * ((main_screen.framebuffer->width) * CHAR_PIXEL_HEIGHT); // width is pixels in a line (pixel = uint32)
@@ -193,6 +200,46 @@ void putc(char c)
         }
     }
     main_screen.textPosX++;
+}
+
+void puts(const char *str)
+{
+    // Strings are null-terminated.
+    // puts should also insert a new line character.
+    int string_length = strlen(str);
+    // Instead of calling putc, we'll do it manually to prevent a bunch of function calls
+    for (int i = 0; i < string_length; i++)
+    {
+        char c = str[i];
+        uint8_t *bmp = font(c);
+        if (main_screen.textPosX >= main_screen.textColumns)
+        {
+            main_screen.textPosY++;
+            main_screen.textPosX = 0;
+        }
+        if (c == '\n')
+        {
+            main_screen.textPosY++;
+            main_screen.textPosX = 0;
+            continue;
+        }
+        volatile int offset = 0;
+        offset = offset + main_screen.textPosX * CHAR_PIXEL_WIDTH;
+        offset = offset + main_screen.textPosY * ((main_screen.framebuffer->width) * CHAR_PIXEL_HEIGHT); // width is pixels in a line (pixel = uint32)
+        for (int pixelY = 0; pixelY < CHAR_PIXEL_HEIGHT; pixelY++)
+        {
+            for (int pixelX = 0; pixelX < CHAR_PIXEL_WIDTH; pixelX++)
+            {
+                uint8_t mask = 1 << pixelX;
+                if (mask & bmp[pixelY])
+                    main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = 0xffffff;
+            }
+        }
+        main_screen.textPosX++;
+    }
+    // Insert new line character
+    main_screen.textPosY++;
+    main_screen.textPosX = 0;
 }
 
 void draw_square(int x, int y, int length, uint32_t color)
