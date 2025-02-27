@@ -52,9 +52,10 @@ void kmain(void)
         draw_square(25, 505, 10, 0x00ff0000);
     }
     char *my_string = "Hello, world!\nThis is text!";
-    puts(my_string);
+    kprintf("My string: %s\n", my_string);
     term_setcolor(0x00000000, 0x00ffffff);
-    puts("How are you?");
+    kprintf("How are you?\n");
+    term_setcolor(0x00ffffff, 0x00000000);
 
     // Kernel should never exit
     halt();

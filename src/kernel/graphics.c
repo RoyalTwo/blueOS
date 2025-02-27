@@ -1,6 +1,7 @@
 #include "limine.h"
 #include "kstring.h"
 #include <stdint.h>
+#include <stdarg.h>
 
 static uint8_t *font(char c)
 {
@@ -201,6 +202,7 @@ void putc(char c)
         main_screen.textPosX = 0;
         return; // Early return because we're not actually printing anything
     }
+    // TODO: Optimize (see VGA_FONTS)
     volatile int offset = 0;
     offset = offset + main_screen.textPosX * CHAR_PIXEL_WIDTH;
     offset = offset + main_screen.textPosY * ((main_screen.framebuffer->width) * CHAR_PIXEL_HEIGHT); // width is pixels in a line (pixel = uint32)
@@ -218,7 +220,7 @@ void putc(char c)
     main_screen.textPosX++;
 }
 
-void puts(const char *str)
+void print_string(const char *str)
 {
     // Strings are null-terminated.
     // puts should also insert a new line character.
@@ -256,9 +258,6 @@ void puts(const char *str)
         }
         main_screen.textPosX++;
     }
-    // Insert new line character
-    main_screen.textPosY++;
-    main_screen.textPosX = 0;
 }
 
 void draw_square(int x, int y, int length, uint32_t color)
@@ -275,4 +274,85 @@ void draw_square(int x, int y, int length, uint32_t color)
 void put_pixel(int x, int y)
 {
     main_screen.fb_ptr[(x) + (y * (main_screen.framebuffer->width))] = 0xffffff;
+}
+
+// printf implementation
+static int get_digits(int input)
+{
+    int result = 0;
+    while (input != 0)
+    {
+        input /= 10;
+        result++;
+    }
+    return result;
+}
+static const char hex_chars[] = "0123456789";
+static void print_individual_digits(int input, int num_digits)
+{
+    char buffer[32];
+    int pos = 0;
+    int current_num = input;
+    int number_sign = 1;
+    if (input < 0)
+    {
+        current_num /= -1;
+        number_sign = -1;
+    }
+    for (int i = 0; i < num_digits; i++)
+    {
+        int place = current_num % 10;
+        current_num /= 10;
+        buffer[pos++] = hex_chars[place];
+    }
+    if (number_sign == -1)
+        buffer[pos++] = '-';
+
+    while (--pos >= 0)
+    {
+        putc(buffer[pos]);
+    }
+}
+void kprintf(char *fmt, ...)
+{
+    // TODO: Support more flags
+    // TODO: Support length specifier
+    va_list args;
+    for (va_start(args, fmt); *fmt != '\0'; ++fmt)
+    {
+        switch (*fmt)
+        {
+        case '%':
+            // now we're in specifier
+            fmt++;
+            switch (*fmt)
+            {
+            case 'i':
+            case 'd':
+            {
+                int i = va_arg(args, int);
+                int digits = get_digits(i);
+                print_individual_digits(i, digits);
+                break;
+            }
+            case 'c':
+            {
+                // A 'char' variable will be promoted to 'int'
+                // A character literal in C is already 'int' by itself
+                int c = va_arg(args, int);
+                putc((char)c);
+                break;
+            }
+            case 's':
+                char *s = va_arg(args, char *);
+                print_string(s);
+                break;
+            }
+            break;
+        default:
+            putc((char)*fmt);
+            break;
+        }
+    }
+    va_end(args);
 }
