@@ -42,6 +42,7 @@ void kmain(void)
     // Fetch the first framebuffer
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
     gpu_init(framebuffer);
+    term_setcolor(0x00ffffff, 0x00000000);
 
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     if (framebuffer->bpp == (uint16_t)32)
@@ -52,6 +53,7 @@ void kmain(void)
     }
     char *my_string = "Hello, world!\nThis is text!";
     puts(my_string);
+    term_setcolor(0x00000000, 0x00ffffff);
     puts("How are you?");
 
     // Kernel should never exit

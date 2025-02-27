@@ -149,6 +149,8 @@ typedef struct terminal
     int textColumns;
     volatile uint32_t *fb_ptr; // here for convenience
     struct limine_framebuffer *framebuffer;
+    uint32_t foregroundColor;
+    uint32_t backgroundColor;
 } terminal_t;
 
 static terminal_t main_screen = {};
@@ -167,6 +169,18 @@ void gpu_init(struct limine_framebuffer *fb)
     main_screen.textRows = fb->height / 8;
     main_screen.textColumns = fb->width / 8;
     main_screen.fb_ptr = fb->address;
+    main_screen.foregroundColor = 0x00ffffff; // white with no alpha
+    main_screen.backgroundColor = 0x00000000; // black with no alpha
+}
+
+// A pixel is defined as a 32-bit integer with the first byte being alpha value?
+// second byte being red
+// third byte being green
+// fourth byte being blue
+void term_setcolor(uint32_t foreground, uint32_t background)
+{
+    main_screen.foregroundColor = foreground;
+    main_screen.backgroundColor = background;
 }
 
 void putc(char c)
@@ -196,7 +210,9 @@ void putc(char c)
         {
             uint8_t mask = 1 << pixelX;
             if (mask & bmp[pixelY])
-                main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = 0xffffff;
+                main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = main_screen.foregroundColor;
+            else
+                main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = main_screen.backgroundColor;
         }
     }
     main_screen.textPosX++;
@@ -208,6 +224,7 @@ void puts(const char *str)
     // puts should also insert a new line character.
     int string_length = strlen(str);
     // Instead of calling putc, we'll do it manually to prevent a bunch of function calls
+    // TODO: we know the text is sequential, optimize by not re-calculating the offset every time
     for (int i = 0; i < string_length; i++)
     {
         char c = str[i];
@@ -232,7 +249,9 @@ void puts(const char *str)
             {
                 uint8_t mask = 1 << pixelX;
                 if (mask & bmp[pixelY])
-                    main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = 0xffffff;
+                    main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = main_screen.foregroundColor;
+                else
+                    main_screen.fb_ptr[offset + pixelX + (pixelY * main_screen.framebuffer->width)] = main_screen.backgroundColor;
             }
         }
         main_screen.textPosX++;
