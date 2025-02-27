@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "limine.h"
 #include "graphics.h"
+#include "gdt.h"
 
 // Set base revision to 2, recommended version
 __attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(2);
@@ -43,6 +44,9 @@ void kmain(void)
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
     gpu_init(framebuffer);
     term_setcolor(0x00ffffff, 0x00000000);
+    kprintf("Loading GDT...\n");
+    gdt_init();
+    kprintf("GDT loaded!\n");
 
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
     if (framebuffer->bpp == (uint16_t)32)
@@ -51,12 +55,6 @@ void kmain(void)
         draw_square(20, 500, 20, 0x00ffffff);
         draw_square(25, 505, 10, 0x00ff0000);
     }
-    char *my_string = "Hello, world!\nThis is text!";
-    kprintf("My string: %s\n", my_string);
-    term_setcolor(0x00000000, 0x00ffffff);
-    kprintf("How are you?\n");
-    term_setcolor(0x00ffffff, 0x00000000);
-
     // Kernel should never exit
     halt();
 }
