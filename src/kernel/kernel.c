@@ -6,7 +6,7 @@
 #include "gdt.h"
 
 // Set base revision to 2, recommended version
-__attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(2);
+__attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(6);
 
 __attribute__((used, section(".requests"))) static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
