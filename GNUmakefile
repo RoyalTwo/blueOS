@@ -26,42 +26,42 @@ override INCLUDE_DIR := src/kernel/include/
 
 # Internal C flags, should NOT be changed
 override KCFLAGS += \
-    -Wall \
-    -Wextra \
-    -std=gnu11 \
-    -ffreestanding \
-    -fno-stack-protector \
-    -fno-stack-check \
-    -fPIE \
-    -m64 \
-    -march=x86-64 \
-    -mno-80387 \
-    -mno-mmx \
-    -mno-sse \
-    -mno-sse2 \
-    -mno-red-zone
+	-Wall \
+	-Wextra \
+	-std=gnu11 \
+	-ffreestanding \
+	-fno-stack-protector \
+	-fno-stack-check \
+	-fPIE \
+	-m64 \
+	-march=x86-64 \
+	-mno-80387 \
+	-mno-mmx \
+	-mno-sse \
+	-mno-sse2 \
+	-mno-red-zone
 
 # Internal C preprocessor flags, should NOT be changed
 override KCPPFLAGS := \
-    -I $(INCLUDE_DIR) \
-    $(KCPPFLAGS) \
-    -MMD \
-    -MP
+	-I $(INCLUDE_DIR) \
+	$(KCPPFLAGS) \
+	-MMD \
+	-MP
 
 # Internal linker flags, should NOT be changed
 override KLDFLAGS += \
-    -nostdlib \
-    -Wl,-m,elf_x86_64 \
-    -Wl,-nostdlib \
-    -Wl,-pie \
-    -Wl,-z,text \
-    -Wl,-z,max-page-size=0x1000 \
-    -Wl,-T,linker.ld
+	-nostdlib \
+	-Wl,-m,elf_x86_64 \
+	-Wl,-nostdlib \
+	-Wl,-pie \
+	-Wl,-z,text \
+	-Wl,-z,max-page-size=0x1000 \
+	-Wl,-T,linker.ld
 
 # Internal NASM flags, should NOT be changed
 override KNASMFLAGS += \
-    -Wall \
-    -f elf64
+	-Wall \
+	-f elf64
 
 # Uses "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names
@@ -78,6 +78,10 @@ all: bin/$(KERNEL)
 src/kernel/limine.h:
 	curl -Lo $@ https://github.com/limine-bootloader/limine/raw/trunk/limine.h
 
+run:
+	./CreateISO.sh
+	qemu-system-x86_64 -cdrom bin/blueOS.iso
+
 # Link rules for the final kernel executable.
 # The magic printf/dd command is used to force the final ELF file type to ET_DYN.
 # GNU binutils currently forces the ELF type to ET_EXEC even for
@@ -86,7 +90,7 @@ src/kernel/limine.h:
 bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(OBJ) $(KLDFLAGS) -o $@
-    printf '\003' | dd of=$@ bs=1 count=1 seek=16 conv=notrunc 2>/dev/null
+	printf '\003' | dd of=$@ bs=1 count=1 seek=16 conv=notrunc 2>/dev/null
 
 # Include header dependencies.
 -include $(HEADER_DEPS)
