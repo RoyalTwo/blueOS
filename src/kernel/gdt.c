@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "gdt.h"
 
 typedef struct __attribute__((packed))
 {
@@ -51,16 +52,8 @@ typedef struct __attribute__((packed))
     uint16_t iomap_base;
 } tss_t;
 
-gdt_t gdt = {
-    {0, 0, 0, 0, 0, 0},         // null
-    {0, 0, 0, 0x9a, 0xa2, 0},   // 64-bit code
-    {0, 0, 0, 0x92, 0xa0, 0},   // 64-bit data
-    {0, 0, 0, 0xF2, 0, 0},      // user data
-    {0, 0, 0, 0xFA, 0x20, 0},   // user code
-    {0, 0, 0, 0x89, 0, 0, 0, 0} // TSS
-};
-
 gdt_descriptor_t GDT_ptr;
+gdt_t gdt;
 tss_t TSS;
 
 extern void gdt_flush(gdt_descriptor_t *);
@@ -98,10 +91,10 @@ void gdt_init(void)
 {
     TSS.iomap_base = sizeof(TSS);
     gdt.null = (gdt_entry_t){0, 0, 0, 0, 0, 0};
-    gdt.kernel_code = make_code_entry(0);
-    gdt.kernel_data = make_data_entry(0);
-    gdt.user_code = make_code_entry(3);
-    gdt.user_data = make_data_entry(3);
+    gdt.kernel_code = make_code_entry(KERNEL_LVL);
+    gdt.kernel_data = make_data_entry(KERNEL_LVL);
+    gdt.user_code = make_code_entry(USER_LVL);
+    gdt.user_data = make_data_entry(USER_LVL);
     gdt.tss_entry = make_tss_entry(&TSS);
 
     // Must be sure to disable interrupts beforehand
