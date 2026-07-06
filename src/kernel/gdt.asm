@@ -1,6 +1,7 @@
 bits 64
 
 global gdt_flush
+global tss_load
 gdt_flush:
     lgdt [rdi]
     ; Reload CS register:
@@ -16,4 +17,8 @@ gdt_flush:
     MOV   FS, AX
     MOV   GS, AX
     MOV   SS, AX
+    RET
+tss_load:
+    MOV ax, 0x28 ; 0x28 because it's (index of the TSS entry) << 3
+    LTR ax
     RET
