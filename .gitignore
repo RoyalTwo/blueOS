@@ -3,6 +3,8 @@ compiler/*
 
 limine/
 limine/*
+limine/limine.dSYM/
+limine/limine.dSYM/*
 
 obj/
 obj/*
