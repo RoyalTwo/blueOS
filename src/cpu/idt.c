@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <cpu/idt.h>
 #include <cpu/types.h>
+#include <printf.h>
 
 typedef struct __attribute((packed))
 {
@@ -113,6 +114,7 @@ idt_entry_t create_new_entry_args(void *handler, idt_options_t options)
 
 void idt_init(void)
 {
+    printf("Initializing IDT...");
     IDT[0] = create_new_entry_default(divideErrorException);
     IDT[1] = create_new_entry_args(debugException, (idt_options_t){.stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
     IDT[3] = create_new_entry_args(breakpointException, (idt_options_t){.stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
@@ -137,4 +139,5 @@ void idt_init(void)
     IDT_ptr.offset = (uint64_t)&IDT;
 
     asm volatile("lidt %0" : : "m"(IDT_ptr));
+    printf(BGRN "Done!\n" WHT);
 }

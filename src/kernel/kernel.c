@@ -2,8 +2,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <limine.h>
-#include <kernel/tty.h>
 #include <cpu/gdt.h>
+#include <cpu/idt.h>
+#include <printf.h>
 
 // Set base revision to 2, recommended version
 __attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(6);
@@ -42,11 +43,8 @@ void kmain(void)
 
     // Fetch the first framebuffer
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
-    tty_init(framebuffer);
-    term_setcolor(0x00ffffff, 0x00000000);
-    kprintf("Loading GDT...\n");
     gdt_init();
-    kprintf("GDT loaded!\n");
+    idt_init();
 
     // Kernel should never exit
     halt();

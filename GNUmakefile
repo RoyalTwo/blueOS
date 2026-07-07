@@ -7,7 +7,7 @@ override KERNEL := blueOS
 # A cross compiler is required. Since I am currently building on MacOS, I installed one with Homebrew.
 # This will need to be changed with Windows though, to use a cross compiler not within the PATH.
 # TODO:
-override KCC := compiler/bin/x86_64-elf-gcc
+override KCC := x86_64-elf-gcc
 
 # Changeable C flags
 override KCFLAGS := -g -O2 -pipe
@@ -75,12 +75,12 @@ override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 .PHONY: all
 all: bin/$(KERNEL)
 
-src/kernel/limine.h:
+src/include/limine.h:
 	curl -Lo $@ https://github.com/limine-bootloader/limine/raw/trunk/limine.h
 
 run:
 	./CreateISO.sh
-	qemu-system-x86_64 -cdrom bin/blueOS.iso
+	qemu-system-x86_64 -serial stdio -cdrom bin/blueOS.iso
 
 # Link rules for the final kernel executable.
 # The magic printf/dd command is used to force the final ELF file type to ET_DYN.
@@ -96,7 +96,7 @@ bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 -include $(HEADER_DEPS)
 
 # Compilation rules for *.c files
-obj/%.c.o: src/%.c GNUmakefile src/limine.h
+obj/%.c.o: src/%.c GNUmakefile src/include/limine.h
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 

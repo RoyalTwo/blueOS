@@ -1,6 +1,7 @@
 #include <stdint.h>
 
-typedef struct {
+typedef struct
+{
     uint64_t cr2;
 
     uint64_t r15;
@@ -34,5 +35,4 @@ typedef struct {
 
 void handle_exception(InterruptFrame frame)
 {
-
 }

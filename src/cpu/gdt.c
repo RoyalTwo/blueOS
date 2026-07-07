@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <cpu/types.h>
+#include <printf.h>
 
 typedef struct __attribute__((packed))
 {
@@ -89,6 +90,7 @@ tss_entry_t make_tss_entry(tss_t *TSS)
 }
 void gdt_init(void)
 {
+    printf(WHT "Initializing GDT...");
     TSS.iomap_base = sizeof(TSS);
     gdt.null = (gdt_entry_t){0, 0, 0, 0, 0, 0};
     gdt.kernel_code = make_code_entry(KERNEL_LVL);
@@ -105,4 +107,5 @@ void gdt_init(void)
     gdt_flush(&GDT_ptr);
     tss_load();
     asm("sti");
+    printf(BGRN "Done!\n" WHT);
 }
