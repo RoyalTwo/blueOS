@@ -12,3 +12,4 @@ int get_num_length(uint64_t num);
 void uint64_to_string(uint64_t num, char *str);
 void uint64_to_hex_string(uint64_t num, char *str);
 void uint64_to_binary_string(uint64_t num, char *buf);
+void uint64_to_hex_string_padded(uint64_t num, char *str);

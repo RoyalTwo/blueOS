@@ -40,6 +40,13 @@ void printf_template(char *format, va_list args)
                 bufferb[64] = 0;
                 write_serial(bufferb);
             }
+            else if (format[i] == 'p')
+            {
+                char bufferx[20];
+                uint64_to_hex_string_padded(va_arg(args, uint64_t), bufferx);
+                bufferx[19] = 0;
+                write_serial(bufferx);
+            }
             else if (format[i] == 's')
             {
                 write_serial(va_arg(args, char *));
