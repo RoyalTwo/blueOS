@@ -53,7 +53,7 @@ typedef struct __attribute__((packed))
 } tss_t;
 
 gdt_descriptor_t GDT_ptr;
-gdt_t gdt;
+static gdt_t gdt;
 tss_t TSS;
 
 extern void gdt_flush(gdt_descriptor_t *);

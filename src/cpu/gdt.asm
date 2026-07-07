@@ -19,6 +19,6 @@ gdt_flush:
     MOV   SS, AX
     RET
 tss_load:
-    MOV ax, 0x28 ; 0x28 because it's (index of the TSS entry) << 3
-    LTR ax
+    MOV AX, 0x28 ; 0x28 because it's (index of the TSS entry) << 3
+    LTR AX
     RET
