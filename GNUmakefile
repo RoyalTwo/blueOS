@@ -7,7 +7,7 @@ override KERNEL := blueOS
 # A cross compiler is required. Since I am currently building on MacOS, I installed one with Homebrew.
 # This will need to be changed with Windows though, to use a cross compiler not within the PATH.
 # TODO:
-override KCC := x86_64-elf-gcc
+override KCC := compiler/bin/x86_64-elf-gcc
 
 # Changeable C flags
 override KCFLAGS := -g -O2 -pipe
@@ -22,7 +22,7 @@ override KNASM_FLAGS := -F dwarf -g
 override KLDFLAGS :=
 
 # Include directory for kernel. TODO: Use more robust system for folder separation
-override INCLUDE_DIR := src/kernel/include/
+override INCLUDE_DIR := src/
 
 # Internal C flags, should NOT be changed
 override KCFLAGS += \
@@ -96,17 +96,17 @@ bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 -include $(HEADER_DEPS)
 
 # Compilation rules for *.c files
-obj/kernel/%.c.o: src/kernel/%.c GNUmakefile src/kernel/include/limine.h
+obj/%.c.o: src/%.c GNUmakefile src/limine.h
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
 # Compilation rules for *.S files
-obj/kernel/%.S.o: src/kernel/%.S GNUmakefile
+obj/%.S.o: src/%.S GNUmakefile
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
 # Compilation rules for *.asm (nasm) files
-obj/kernel/%.asm.o: src/kernel/%.asm GNUmakefile
+obj/%.asm.o: src/%.asm GNUmakefile
 	mkdir -p "$$(dirname $@)"
 	nasm $(KNASMFLAGS) $< -o $@
 

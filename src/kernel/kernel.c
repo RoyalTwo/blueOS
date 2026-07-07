@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include "limine.h"
-#include "tty.h"
-#include "gdt.h"
+#include <limine.h>
+#include "kernel/include/tty.h"
+#include "cpu/include/gdt.h"
 
 // Set base revision to 2, recommended version
 __attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(6);

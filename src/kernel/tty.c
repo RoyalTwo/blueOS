@@ -1,7 +1,7 @@
-#include "limine.h"
-#include "kstring.h"
 #include <stdint.h>
 #include <stdarg.h>
+#include <limine.h>
+#include "kernel/include/kstring.h"
 
 static uint8_t *font(char c)
 {
