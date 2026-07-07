@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "cpu/include/types.h"
+#include <cpu/types.h>
 
 typedef struct __attribute__((packed))
 {

@@ -1,8 +1,8 @@
 #include <stdint.h>
-#include "cpu/include/idt.h"
-#include "cpu/include/types.h"
+#include <cpu/idt.h>
+#include <cpu/types.h>
 
-typedef struct __attribute((packed)) 
+typedef struct __attribute((packed))
 {
     uint16_t offset0;
     uint16_t segment;
@@ -13,14 +13,14 @@ typedef struct __attribute((packed))
     uint32_t _reserved;
 } idt_entry_t;
 
-typedef struct __attribute__((packed)) 
+typedef struct __attribute__((packed))
 {
     uint16_t size;
     uint64_t offset;
 } idt_descriptor_t;
 
 idt_descriptor_t IDT_ptr;
-static idt_entry_t* IDT; // Total Maximum: 255
+static idt_entry_t *IDT; // Total Maximum: 255
 
 typedef struct
 {
@@ -30,7 +30,8 @@ typedef struct
     CODE_PRIVILEGE_LEVEL dpl;
 } idt_options_t;
 
-typedef struct {
+typedef struct
+{
     uint16_t offset0;
     uint16_t offset1;
     uint32_t offset2;
@@ -74,7 +75,6 @@ extern void machineCheckException();
 extern void SIMDFloatingPointException();
 extern void virtualizationException();
 
-
 /*
     Creates new IDT entry with default options.
     Default options:
@@ -82,7 +82,7 @@ extern void virtualizationException();
         Interrupts Disabled (Interrupt Gate, not Trap Gate)
         Interrupt Stack Table (IST) Unused
 */
-idt_entry_t create_new_entry_default(void* handler)
+idt_entry_t create_new_entry_default(void *handler)
 {
     split_offset offset = get_offset((uint64_t)handler);
     uint8_t access = get_access(INTERRUPT_GATE, KERNEL_LVL);
@@ -96,7 +96,7 @@ idt_entry_t create_new_entry_default(void* handler)
     };
     return new_entry;
 }
-idt_entry_t create_new_entry_args(void* handler, idt_options_t options)
+idt_entry_t create_new_entry_args(void *handler, idt_options_t options)
 {
     split_offset offset = get_offset((uint64_t)handler);
     uint8_t access = get_access(options.gate_type, options.dpl);
@@ -111,12 +111,12 @@ idt_entry_t create_new_entry_args(void* handler, idt_options_t options)
     return new_entry;
 }
 
-void idt_init(void) 
+void idt_init(void)
 {
     IDT[0] = create_new_entry_default(divideErrorException);
-    IDT[1] = create_new_entry_args(debugException, (idt_options_t){ .stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
-    IDT[3] = create_new_entry_args(breakpointException, (idt_options_t){ .stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
-    IDT[4] = create_new_entry_args(overflowException, (idt_options_t){ .stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
+    IDT[1] = create_new_entry_args(debugException, (idt_options_t){.stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
+    IDT[3] = create_new_entry_args(breakpointException, (idt_options_t){.stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
+    IDT[4] = create_new_entry_args(overflowException, (idt_options_t){.stack_index = 0, .segment = KERNEL_CODE_SELECTOR, .gate_type = TRAP_GATE, KERNEL_LVL});
     IDT[5] = create_new_entry_default(BOUNDRangeExceededException);
     IDT[6] = create_new_entry_default(invalidOpcodeException);
     IDT[7] = create_new_entry_default(deviceNotAvailableException);
@@ -136,5 +136,5 @@ void idt_init(void)
     IDT_ptr.size = (sizeof(idt_entry_t) * 256) - 1;
     IDT_ptr.offset = (uint64_t)&IDT;
 
-    asm volatile ("lidt %0" : : "m"(IDT_ptr));
+    asm volatile("lidt %0" : : "m"(IDT_ptr));
 }

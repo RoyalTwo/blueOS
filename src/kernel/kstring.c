@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "kernel/include/kstring.h"
+#include <kernel/kstring.h>
 
 void *memcpy(void *dest, const void *src, size_t n)
 {

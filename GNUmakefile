@@ -22,7 +22,7 @@ override KNASM_FLAGS := -F dwarf -g
 override KLDFLAGS :=
 
 # Include directory for kernel. TODO: Use more robust system for folder separation
-override INCLUDE_DIR := src/
+override INCLUDE_DIR := src/include/
 
 # Internal C flags, should NOT be changed
 override KCFLAGS += \
