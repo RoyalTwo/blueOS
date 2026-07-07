@@ -20,9 +20,6 @@ typedef struct __attribute__((packed))
     uint64_t offset;
 } idt_descriptor_t;
 
-idt_descriptor_t IDT_ptr;
-static idt_entry_t *IDT; // Total Maximum: 255
-
 typedef struct
 {
     uint8_t stack_index; // 0 for disabled, 1-7 for IST entry (n)
@@ -111,6 +108,9 @@ idt_entry_t create_new_entry_args(void *handler, idt_options_t options)
     };
     return new_entry;
 }
+
+idt_descriptor_t IDT_ptr;
+idt_entry_t IDT[256];
 
 void idt_init(void)
 {
