@@ -39,9 +39,9 @@ To build from source:
 
 1. Run `BuildCross.sh` to build a cross-compiler for the project (only supports APT package manager for now)
 2. Run `make` to build executable
-- (Optional) Run `./InstallLimine.sh` to install limine to the project directory (only relevant for ISO)
-- (Optional) Create the ISO with `./CreateISO.sh`
-3. The executable and iso are in bin/
+3. (Optional) Run `./InstallLimine.sh` to install limine to the project directory (only relevant for ISO)
+4. (Optional) Create the ISO with `./CreateISO.sh`
+5. The executable and iso are in bin/
 
 To run the OS:
 
