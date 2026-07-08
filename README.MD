@@ -37,14 +37,14 @@ I started this project to learn about how operating systems work, low level conc
 
 To build from source:
 
-- Run `BuildCross.sh` to build a cross-compiler for the project (only supports APT package manager for now)
-- Run `make` to build executable
+1. Run `BuildCross.sh` to build a cross-compiler for the project (only supports APT package manager for now)
+2. Run `make` to build executable
 - (Optional) Run `./InstallLimine.sh` to install limine to the project directory (only relevant for ISO)
 - (Optional) Create the ISO with `./CreateISO.sh`
-- The executable and iso are in bin/
+3. The executable and iso are in bin/
 
 To run the OS:
 
-a. Use the executable file (bin/blueOS) or ISO (bin/blueOS.iso) with qemu-system-x86_64 to emulate or Rufus to burn onto a USB, then boot on real hardware
-b. Run `make run` (uses qemu-system-x86_64 under the hood)
+- Use the executable file (bin/blueOS) or ISO (bin/blueOS.iso) with qemu-system-x86_64 to emulate or Rufus to burn onto a USB, then boot on real hardware
+- Run `make run` (uses qemu-system-x86_64 under the hood)
     - Requires running `./InstallLimine.sh` beforehand!
