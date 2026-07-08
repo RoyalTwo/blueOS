@@ -1,0 +1,36 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository }}-compiler:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: make
+      
+    - name: Install Limine
+      run: ./InstallLimine.sh
+
+    - name: Create ISO
+      run: ./CreateISO.sh
+      
+    - name: Release
+      uses: softprops/action-gh-release@v3
+      with:
+        generate_release_notes: true
+        working_directory: bin
+        files: |
+          blueOS
+          blueOS.iso
