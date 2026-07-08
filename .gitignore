@@ -12,4 +12,7 @@ obj/*
 iso_root/
 iso_root/*
 
+test.c
+test.out
+
 .DS_Store
