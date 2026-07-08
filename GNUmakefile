@@ -7,7 +7,7 @@ override KERNEL := blueOS
 # A cross compiler is required. Since I am currently building on MacOS, I installed one with Homebrew.
 # This will need to be changed with Windows though, to use a cross compiler not within the PATH.
 # TODO:
-override KCC := x86_64-elf-gcc
+override KCC := compiler/bin/x86_64-elf-gcc
 
 # Changeable C flags
 override KCFLAGS := -g -O2 -pipe
