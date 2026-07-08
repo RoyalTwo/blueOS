@@ -66,6 +66,14 @@ make -j 8 all-target-libgcc || exit 1
 make -j 8 install-gcc || exit 1
 make -j 8 install-target-libgcc || exit 1
 
-# Finish
+# Clean Up
 cd ../
+rm -rf binutils.tar.xz
+rm -rf gcc.tar.xz
+rm -rf binutils-2.42
+rm -rf gcc-14.1.0
+rm -rf build-binutils
+rm -rf build-gcc
+
+# Finish
 echo "Compiler built! Use $DOWNLOAD_DIR/bin/$TARGET-elf-gcc!"
