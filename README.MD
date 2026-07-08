@@ -6,26 +6,26 @@ The kernel is currently being loaded with Limine. I've written a custom bootload
 
 The linker script, makefile, and entry point are provided as part of the Limine standard example. Everything else (the whole kernel) is custom.
 
-Goals:
+### Goals
 
-### General
+#### General
 
 - [ ] Kernel/Usermode separation
 - [ ] Basic shell
 - [ ] GUI
 
-### CPU
+#### CPU
 
 - [x] Global Descriptor Table
 - [x] Interrupt Descriptor Table
 
-### Drivers
+#### Drivers
 
 - [x] Serial
 - [ ] PS/2 Keyboard
 - [ ] File system (FAT32)
 
-### Memory
+#### Memory
 
 - [ ] Paging
 - [ ] Memory management
