@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 RUN apt-get update && apt upgrade -y
-RUN apt-get install nasm build-essential git -y
+RUN apt-get install nasm build-essential git xorriso -y
 
 COPY compiler /usr/local/bin/compiler/
 
