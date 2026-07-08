@@ -5,6 +5,7 @@
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
 #include <cpu/cpu.h>
+#include <drivers/serial.h>
 #include <printf.h>
 
 // Set base revision to 2, recommended version
@@ -36,6 +37,8 @@ void kmain(void)
 
     // Fetch the first framebuffer
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    init_serial();
+    printf(CLR);
     gdt_init();
     idt_init();
 
