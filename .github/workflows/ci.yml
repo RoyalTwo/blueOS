@@ -1,0 +1,33 @@
+name: Build CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/royaltwo/blueos-compiler:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: make KCC=/usr/local/bin/compiler/bin/x86_64-elf-gcc
+      
+    - name: Install Limine
+      run: ./InstallLimine.sh
+
+    - name: Create ISO
+      run: ./CreateISO.sh
