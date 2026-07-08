@@ -5,6 +5,7 @@
 The kernel is currently being loaded with Limine. I've written a custom bootloader in assembly with disk loading and conversion from LBA to CHS, but opted to switch to Limine afterwards since I built it for learning and wanted to focus primarily on the kernel. You can still find the custom bootloader in archive/, it also uses a FAT12 file system.
 
 The linker script, makefile, and entry point are provided as part of the Limine standard example. Everything else (the whole kernel) is custom.
+
 Goals:
 
 ### General
