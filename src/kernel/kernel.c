@@ -42,5 +42,6 @@ void kmain(void)
     gdt_init();
     idt_init();
 
+    // Kernel should never exit
     HALT();
 }
