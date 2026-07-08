@@ -38,8 +38,6 @@ void kmain(void)
     struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
     gdt_init();
     idt_init();
-    asm volatile("int $0");
 
-    // Kernel should never exit
     HALT();
 }
