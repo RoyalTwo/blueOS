@@ -42,7 +42,7 @@ The linker script, makefile, and entry point are provided as part of the Limine 
 
 I started this project to learn about how operating systems work, low level concepts, and low level programming. Since starting, I have learned so much about assembly, processor architecture, memory, etc. and it's been exceedingly helpful to becoming a better and more experienced programmer. Plus, it's very satisfying to watch your own code boot! 😊
 
-## Building/Running
+## Building
 
 To build from source:
 
@@ -50,10 +50,4 @@ To build from source:
 2. Run `make` to build executable
 3. (Optional) Run `./InstallLimine.sh` to install limine to the project directory (only relevant for ISO)
 4. (Optional) Create the ISO with `./CreateISO.sh`
-5. The executable and iso are in bin/
-
-To run the OS:
-
-- Use the executable file (bin/blueOS) or ISO (bin/blueOS.iso) with qemu-system-x86_64 to emulate or Rufus to burn onto a USB, then boot on real hardware
-- Run `make run` (uses qemu-system-x86_64 under the hood)
-    - Requires running `./InstallLimine.sh` beforehand!
+5. The executable and iso are in bin/, use `make run` to run with QEMU
