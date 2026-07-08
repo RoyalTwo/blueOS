@@ -9,6 +9,9 @@ limine/limine.dSYM/*
 obj/
 obj/*
 
+bin/
+bin/*
+
 iso_root/
 iso_root/*
 
