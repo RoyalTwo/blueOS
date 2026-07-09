@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <limine.h>
 
 // config
 void tty_init(struct limine_framebuffer *fb);

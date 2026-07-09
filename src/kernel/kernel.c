@@ -1,23 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <limine.h>
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
 #include <cpu/cpu.h>
 #include <drivers/serial.h>
 #include <printf.h>
-
-// Set base revision to 2, recommended version
-__attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(6);
-
-__attribute__((used, section(".requests"))) static volatile struct limine_framebuffer_request framebuffer_request = {
-    .id = LIMINE_FRAMEBUFFER_REQUEST,
-    .revision = 0};
-
-// Start and end markers for Limine requests, can be moved to any C file
-__attribute__((used, section(".requests_start_marker"))) static volatile LIMINE_REQUESTS_START_MARKER;
-__attribute__((used, section(".requests_end_marker"))) static volatile LIMINE_REQUESTS_END_MARKER;
+#include <kernel/tty.h>
+#include <kernel/bootutils.h>
+#include <mem/paging.h>
 
 // Kernel entry point
 // TODO: Clean up this file
@@ -41,6 +32,10 @@ void kmain(void)
     printf(CLR);
     gdt_init();
     idt_init();
+    tty_init(framebuffer);
+    print_string("Framebuffer initialized.\n");
+    print_string("Here's a second line.\n");
+    init_paging();
 
     // Kernel should never exit
     HALT();
