@@ -14,6 +14,7 @@ SECTIONS
     /* Additionally, leave space for the ELF headers by adding SIZEOF_HEADERS to the */
     /* base load address. */
     . = 0xffffffff80000000 + SIZEOF_HEADERS;
+    l_kernel_start = .;
 
     .rodata ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.rodata .rodata.*)
@@ -23,6 +24,7 @@ SECTIONS
         *(.text .text.*)
     }
 
+    l_kernel_writable_start = .;
     .data ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.data .data.*)
 
@@ -46,6 +48,7 @@ SECTIONS
         *(.bss .bss.*)
         *(COMMON)
     }
+    l_kernel_end = .;
 
     /* Discard the program interpreter section since we do not need one. This is */
     /* more or less equivalent to the --no-dynamic-linker linker flag, except that it */
