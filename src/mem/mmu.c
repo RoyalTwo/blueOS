@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <printf.h>
-#include <mem/paging.h>
+#include <mem/mmu.h>
+#include <mem/pmm.h>
 #include <kernel/kstring.h>
+#include <kernel/kernel.h>
 #include <limine.h>
 
 #define PAGE_PRESENT (1ULL << 0)
@@ -9,59 +11,6 @@
 #define PAGE_USER (1ULL << 2)
 #define PAGE_HUGE (1ULL << 7)
 #define PAGE_NX (1ULL << 63)
-
-#define PHY_TO_VIRT(physical) (physical + HHDM_OFFSET)
-#define PAGE_ADDR_MASK 0x000FFFFFFFFFF000ULL
-
-#define PAGE_SIZE 4096
-
-__attribute__((used, section(".requests"))) static volatile struct limine_hhdm_request hhdm_request = {
-    .id = LIMINE_HHDM_REQUEST,
-    .revision = 0};
-
-__attribute__((used, section(".requests"))) static volatile struct limine_memmap_request memmap_request = {
-    .id = LIMINE_MEMMAP_REQUEST,
-    .revision = 0};
-
-__attribute__((used, section(".requests"))) static volatile struct limine_kernel_address_request kernel_address_request = {
-    .id = LIMINE_KERNEL_ADDRESS_REQUEST,
-    .revision = 0};
-
-typedef struct
-{
-    uint64_t current;
-    uint64_t end;
-} pmm_t;
-
-static pmm_t PMM;
-static uint64_t HHDM_OFFSET;
-
-// Simple bump allocator, doesn't even take into account other sections
-void *alloc_page()
-{
-    if (PMM.current >= PMM.end)
-    {
-        printf("alloc_page: error! reached end of section memory.\n");
-        return 0;
-    }
-    uint64_t page = PMM.current;
-    PMM.current += PAGE_SIZE;
-    return (void *)page;
-}
-
-void print_memmap()
-{
-    const char *ENTRY_TYPES[] = {"USABLE                ", "RESERVED              ", "ACPI_RECLAIMABLE      ", "ACPI_NVS              ", "BAD_MEMORY            ", "BOOTLOADER_RECLAIMABLE", "EXECUTABLE_AND_MODULES", "FRAMEBUFFER           ", "RESERVED_MAPPED       "};
-    struct limine_memmap_entry **entries = memmap_request.response->entries;
-    uint32_t entry_count = memmap_request.response->entry_count;
-    printf("\n-Memory Map-\n");
-    printf("          Type          |           Base\n");
-    printf("------------------------|---------------------\n");
-    for (uint32_t i = 0; i < entry_count; i++)
-    {
-        printf("%s  |   0x%p\n", ENTRY_TYPES[entries[i]->type], entries[i]->base);
-    }
-}
 
 typedef uint64_t page_table_entry_t;
 typedef struct __attribute((packed))
@@ -132,7 +81,7 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
         page_table_entry_t pml4_entry = pml4->entries[pml4_i];
         if (!(pml4_entry & PAGE_PRESENT))
         {
-            page_table_entry_t page = (page_table_entry_t)alloc_page();
+            page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
             memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
             page = page | table_flags;
             pml4->entries[pml4_i] = page;
@@ -145,7 +94,7 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
             page_table_entry_t pdpt_entry = PDPT->entries[pdpt_i];
             if (!(pdpt_entry & PAGE_PRESENT))
             {
-                page_table_entry_t page = (page_table_entry_t)alloc_page();
+                page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
                 memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
                 page = page | table_flags;
                 PDPT->entries[pdpt_i] = page;
@@ -158,7 +107,7 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
                 page_table_entry_t pd_entry = PD->entries[pd_i];
                 if (!(pd_entry & PAGE_PRESENT))
                 {
-                    page_table_entry_t page = (page_table_entry_t)alloc_page();
+                    page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
                     memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
                     page = page | table_flags;
                     PD->entries[pd_i] = page;
@@ -193,7 +142,7 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
         if (entry_type == LIMINE_MEMMAP_USABLE || entry_type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE || entry_type == LIMINE_MEMMAP_KERNEL_AND_MODULES || entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
         {
             uint64_t num_pages = current->length / PAGE_SIZE;
-            uint64_t virt_addr = current->base + HHDM_OFFSET;
+            uint64_t virt_addr = current->base + kernel.hhdm_offset;
             uint64_t phy_addr = current->base;
             uint64_t flags = PAGE_PRESENT | PAGE_WRITABLE;
             printf("Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
@@ -243,35 +192,24 @@ uint64_t get_cr3_pml4_address()
 {
     uint64_t cr3_val = 0;
     asm volatile("mov %%cr3, %0" : "=r"(cr3_val));
-    return cr3_val + HHDM_OFFSET;
+    return cr3_val + kernel.hhdm_offset;
 }
 
 static int test = 123;
 
 void init_paging(void)
 {
-    HHDM_OFFSET = hhdm_request.response->offset;
+    // TODO: Unmapping pages
     uint64_t pml4_addr = get_cr3_pml4_address();
     printf("PML4 Virtual Address: 0x%p\n", pml4_addr);
     page_table_t *PML4 = (page_table_t *)pml4_addr;
 
-    struct limine_memmap_entry **entries = memmap_request.response->entries;
-    struct limine_kernel_address_response *kernel_positions = kernel_address_request.response;
-    uint32_t entry_count = memmap_request.response->entry_count;
+    struct limine_memmap_entry **entries = kernel.memmap->entries;
+    uint32_t entry_count = kernel.memmap->entry_count;
     print_memmap();
-    // for now, just choose a section
-    for (uint32_t i = 0; i < entry_count; i++)
-    {
-        if (entries[i]->type == LIMINE_MEMMAP_USABLE)
-        {
-            PMM.current = entries[i]->base;
-            PMM.end = PMM.current + entries[i]->length;
-            break;
-        }
-    }
     // print_memmap();
     map_sections(PML4, entry_count, entries);
-    map_kernel(PML4, kernel_positions->physical_base, kernel_positions->virtual_base);
+    map_kernel(PML4, kernel.kernel_pos.physical_base, kernel.kernel_pos.virtual_base);
     printf("Attempting to map virtual address 0x%p to physical address...", &test);
     uint64_t phy_addr = virt_to_physical(PML4, &test);
     printf(" Virtual address: 0x%p\n", phy_addr);
