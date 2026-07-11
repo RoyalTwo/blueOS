@@ -18,28 +18,26 @@ I started this project to learn about how operating systems work, low level conc
 - Download the [latest ISO](https://github.com/RoyalTwo/blueOS/releases/latest) from the Releases tab (automatically built with every tag)
 - Use `qemu-system-x86_64` to run in a virtual machine or flash to USB with Rufus
 
-### Goals
+## Goals
 
-(Very incomplete list)
-
-#### General
+### General
 
 - [ ] Kernel/Usermode separation
 - [ ] Basic shell
 - [ ] GUI
 
-#### CPU
+### CPU
 
 - [x] Global Descriptor Table
 - [x] Interrupt Descriptor Table
 
-#### Drivers
+### Drivers
 
 - [x] Serial
 - [ ] PS/2 Keyboard
 - [ ] File system (FAT32)
 
-#### Memory
+### Memory
 
 - [x] Paging
 - [ ] Memory management
