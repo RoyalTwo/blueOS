@@ -1,6 +1,6 @@
 #pragma once
 
-// colours (courtesy of UnmappedStack)
+// colors (courtesy of UnmappedStack)
 #define BLK "\x1B[0;30m"
 #define RED "\x1B[0;31m"
 #define GRN "\x1B[0;32m"
@@ -19,5 +19,8 @@
 #define BMAG "\x1B[1;35m"
 #define BCYN "\x1B[1;36m"
 #define BWHT "\x1B[1;37m"
+
+// symbols
+#define RARROW "\u2514 "
 
 void printf(char *format, ...);
