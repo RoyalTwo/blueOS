@@ -2,6 +2,18 @@
 #include <printf.h>
 #include <cpu/cpu.h>
 
+void PANIC(char *message)
+{
+    printf(BRED "                ### KERNEL PANIC! ###\n" WHT);
+    printf("    An exception has occurred and execution cannot continue.\n");
+    printf("    Error Message: %s\n", message);
+    printf("\n");
+
+    printf(BWHT "This machine will now halt. Please reboot.\n" WHT);
+
+    HALT();
+}
+
 void handle_exception(InterruptFrame frame)
 {
     printf(BRED "                ### KERNEL PANIC! ###\n" WHT);

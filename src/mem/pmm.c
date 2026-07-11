@@ -1,19 +1,30 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <printf.h>
 #include <mem/mmu.h>
 #include <kernel/kernel.h>
-#include <kstring.h>
+#include <kernel/panic.h>
+#include <kernel/kstring.h>
 
-struct early_pmm
+struct bump_allocator
 {
     uint64_t current;
     uint64_t end;
 };
 
-static struct early_pmm bumpPMM;
+static struct bump_allocator bumpPMM;
 
-uint8_t *pmm_bitmap;
-uint64_t *pmm_bitmap_size_bytes;
+struct bitmap_allocator
+{
+    uint8_t *bitmap;
+    uint64_t bitmap_size_bytes;
+    uint64_t bitmap_size_pages;
+    uint64_t last_search_index;
+    uint64_t bitmap_phy_addr;
+    uint64_t mem_total_pages;
+};
+
+static struct bitmap_allocator PMM;
 
 void print_memmap()
 {
@@ -30,32 +41,67 @@ void print_memmap()
 }
 
 // Simple bump allocator, doesn't even take into account other sections
-void *bump_alloc_pages(uint64_t num_pages)
+uint64_t bump_alloc_pages(uint64_t num_pages)
 {
-    if (bumpPMM.current >= bumpPMM.end)
+    if (num_pages == 0)
     {
-        printf("bump_alloc_pages: error! reached end of section memory.\n");
+        printf("bump_alloc_pages: num_pages = 0\n");
         return 0;
     }
+
+    uint64_t size = num_pages * PAGE_SIZE;
+
+    if (bumpPMM.current == 0 || bumpPMM.end == 0)
+    {
+        printf("bump_alloc_pages: current or end = 0\n");
+        return 0;
+    }
+
+    if (bumpPMM.current + size > bumpPMM.end)
+    {
+        printf("bump_alloc_pages: requested size too large (num_pages = %d, size = %d)\n", num_pages, size);
+        return 0;
+    }
+
     uint64_t page = bumpPMM.current;
-    bumpPMM.current += PAGE_SIZE * num_pages;
-    return (void *)page;
+    bumpPMM.current += size;
+
+    return page;
 }
 
-void create_bump_pmm()
+void create_bump_pmm_for_size(uint64_t needed_pages)
 {
-    // just choose a section
-    uint64_t entry_count = kernel.memmap->entry_count;
-    struct limine_memmap_entry **entries = kernel.memmap->entries;
-    for (uint32_t i = 0; i < entry_count; i++)
+    uint64_t needed_size = needed_pages * PAGE_SIZE;
+
+    bumpPMM.current = 0;
+    bumpPMM.end = 0;
+
+    for (uint32_t i = 0; i < kernel.memmap->entry_count; i++)
     {
-        if (entries[i]->type == LIMINE_MEMMAP_USABLE)
-        {
-            bumpPMM.current = entries[i]->base;
-            bumpPMM.end = bumpPMM.current + entries[i]->length;
-            break;
-        }
+        struct limine_memmap_entry *e = kernel.memmap->entries[i];
+
+        if (e->type != LIMINE_MEMMAP_USABLE)
+            continue;
+
+        uint64_t start = PAGE_ALIGN_UP(e->base);
+        uint64_t end = PAGE_ALIGN_DOWN(e->base + e->length);
+
+        if (start < PAGE_SIZE)
+            start = PAGE_SIZE;
+
+        if (end <= start)
+            continue;
+
+        if (end - start < needed_size)
+            continue;
+
+        bumpPMM.current = start;
+        bumpPMM.end = end;
+
+        return;
     }
+
+    PANIC("create_bump_pmm: no usable range large enough for bitmap");
 }
 
 uint64_t get_physical_num_pages()
@@ -75,31 +121,25 @@ uint64_t get_physical_num_pages()
 }
 
 #define GET_PAGE_NUM_FROM_PHY(physical) (physical / PAGE_SIZE)
-#define BM_GET_BYTE_FROM_PAGE(page) ((uint64_t(page / 8)))
-#define BM_GET_BIT_FROM_PAGE(page) ((uint8_t(page % 8)))
 
-uint64_t bm_get_byte_from_page(uint64_t page)
+static inline void bm_set_page(uint64_t page)
 {
-    return (page / 8);
+    PMM.bitmap[page / 8] |= (1 << (page % 8)); // byte is page / 8, bit is page % 8
 }
 
-uint8_t bm_get_bit_from_page(uint64_t page)
+static inline void bm_clear_page(uint64_t page)
 {
-    return (uint8_t)(page % 8);
+    PMM.bitmap[page / 8] &= ~(1 << (page % 8));
 }
 
-void bm_mark_used(uint8_t *bitmap, uint64_t byte_index, uint8_t bit_index)
+static inline bool bm_test_page(uint64_t page)
 {
-    bitmap[byte_index] |= (1 << bit_index);
-}
-void bm_mark_free(uint8_t *bitmap, uint64_t byte_index, uint8_t bit_index)
-{
-    bitmap[byte_index] &= ~(1 << bit_index);
+    return PMM.bitmap[page / 8] & (1 << (page % 8));
 }
 
+// Takes in physical address
 void pmm_reserve_range(uint64_t base, uint64_t length)
 {
-    // Takes in physical address
     uint64_t base_aligned = PAGE_ALIGN_DOWN(base);
     uint64_t stop_aligned = PAGE_ALIGN_UP(base + length);
     size_t num_pages = (stop_aligned - base_aligned) / PAGE_SIZE;
@@ -107,7 +147,7 @@ void pmm_reserve_range(uint64_t base, uint64_t length)
     for (size_t i = 0; i < num_pages; i++)
     {
         size_t current_page_bm = GET_PAGE_NUM_FROM_PHY(current_physical);
-        bm_mark_used(pmm_bitmap, bm_get_byte_from_page(current_page_bm), bm_get_bit_from_page(current_page_bm));
+        bm_set_page(current_page_bm);
         current_physical += PAGE_SIZE;
     }
 }
@@ -122,7 +162,7 @@ void pmm_free_range(uint64_t base, uint64_t length)
     for (size_t i = 0; i < num_pages; i++)
     {
         size_t current_page_bm = GET_PAGE_NUM_FROM_PHY(current_physical);
-        bm_mark_free(pmm_bitmap, bm_get_byte_from_page(current_page_bm), bm_get_bit_from_page(current_page_bm));
+        bm_clear_page(current_page_bm);
         current_physical += PAGE_SIZE;
     }
 }
@@ -130,24 +170,51 @@ void pmm_free_range(uint64_t base, uint64_t length)
 // Returns PHYSICAL address
 uint64_t pmm_alloc_page()
 {
+    // Start from last search index, more likely to find an empty page
+    for (uint64_t i = PMM.last_search_index; i < PMM.mem_total_pages; i++)
+    {
+        if (!bm_test_page(i))
+        {
+            bm_set_page(i);
+            PMM.last_search_index = i + 1;
+            return i * PAGE_SIZE;
+        }
+    }
+
+    // Start from beginning if last search index couldn't help
+    for (uint64_t i = 1; i < PMM.last_search_index; i++)
+    {
+        if (!bm_test_page(i))
+        {
+            bm_set_page(i);
+            PMM.last_search_index = i + 1;
+            return i * PAGE_SIZE;
+        }
+    }
+
+    return 0; // out of physical memory
 }
 
-void pmm_free_page(uint64_t page)
+void pmm_free_page(uint64_t physical)
 {
-}
+    if (physical == 0)
+        PANIC("pmm_free_page: Tried to free physical page 0!");
 
-void create_bitmap(uint64_t num_phy_pages)
-{
-    uint64_t bitmap_size_bytes = (num_phy_pages + 7) / 8; // + 7 rounds up
-    uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;
+    if (physical & (PAGE_SIZE - 1))
+        PANIC("pmm_free_page: Tried to free unaligned physical address!");
 
-    uint64_t bitmap_phys = bump_alloc_pages(bitmap_size_pages);
-    pmm_bitmap = (uint8_t)PHY_TO_VIRT(bitmap_phys);
-    pmm_bitmap_size_bytes = bitmap_size_bytes;
-    memset(pmm_bitmap, 0xFF, bitmap_size_bytes); // 0xFF marks every page as USED
-    bitmap_initial_mark_free();
-    pmm_reserve_range(bitmap_phys, bitmap_size_pages * PAGE_SIZE); // Reserve itself
-    pmm_reserve_range(0, PAGE_SIZE);                               // Returning physical address 0 should look like failure
+    uint64_t page = physical / PAGE_SIZE;
+
+    if (page >= PMM.mem_total_pages)
+        PANIC("pmm_free_page: Tried to free page outside physical memory!");
+
+    if (!bm_test_page(page))
+        PANIC("pmm_free_page: Double free physical page!");
+
+    bm_clear_page(page);
+
+    if (page < PMM.last_search_index)
+        PMM.last_search_index = page;
 }
 
 void bitmap_initial_mark_free()
@@ -161,9 +228,43 @@ void bitmap_initial_mark_free()
     }
 }
 
+struct bitmap_allocator create_bitmap(uint64_t num_phy_pages)
+{
+    uint64_t bitmap_size_bytes = (num_phy_pages + 7) / 8; // + 7 rounds up
+    uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;
+
+    printf("PMM: total physical pages = %d\n", num_phy_pages);
+    printf("PMM: bitmap size bytes = %d\n", bitmap_size_bytes);
+    printf("PMM: bitmap size pages = %d\n", bitmap_size_pages);
+    printf("PMM: bump range = 0x%p - 0x%p\n",
+           bumpPMM.current,
+           bumpPMM.end);
+
+    uint64_t bitmap_phys = bump_alloc_pages(bitmap_size_pages);
+    printf("PMM: bitmap_phys = 0x%p\n", bitmap_phys);
+    if (bitmap_phys == 0)
+        PANIC("create_bitmap: bump alloc returned 0!");
+    uint8_t *pmm_bitmap = (uint8_t *)PHY_TO_VIRT(bitmap_phys);
+    memset(pmm_bitmap, 0xFF, bitmap_size_bytes); // 0xFF marks every page as USED
+    return (struct bitmap_allocator){
+        .bitmap = pmm_bitmap,
+        .bitmap_size_bytes = bitmap_size_bytes,
+        .bitmap_size_pages = bitmap_size_pages,
+        .bitmap_phy_addr = bitmap_phys,
+        .last_search_index = 1,
+        .mem_total_pages = num_phy_pages,
+    };
+}
+
 void init_pmm()
 {
-    create_bump_pmm(); // Only used to initially allocate space for bitmap
     uint64_t num_pages_mem = get_physical_num_pages();
-    create_bitmap(num_pages_mem);
+    uint64_t bitmap_size_bytes = (num_pages_mem + 7) / 8;
+    uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;
+    create_bump_pmm_for_size(bitmap_size_pages); // Only used to initially allocate space for bitmap
+
+    PMM = create_bitmap(num_pages_mem);
+    bitmap_initial_mark_free();
+    pmm_reserve_range(PMM.bitmap_phy_addr, PMM.bitmap_size_pages * PAGE_SIZE); // Reserve itself
+    pmm_reserve_range(0, PAGE_SIZE);                                           // Returning physical address 0 should look like failure
 }

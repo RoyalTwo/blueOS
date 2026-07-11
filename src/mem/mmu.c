@@ -4,6 +4,7 @@
 #include <mem/pmm.h>
 #include <kernel/kstring.h>
 #include <kernel/kernel.h>
+#include <kernel/panic.h>
 #include <limine.h>
 
 #define PAGE_PRESENT (1ULL << 0)
@@ -94,6 +95,8 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
         if (!(pml4_entry & PAGE_PRESENT))
         {
             page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
+            if (page == 0)
+                return 1;
             memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
             page = page | table_flags;
             pml4->entries[pml4_i] = page;
@@ -107,6 +110,8 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
             if (!(pdpt_entry & PAGE_PRESENT))
             {
                 page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
+                if (page == 0)
+                    return 1;
                 memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
                 page = page | table_flags;
                 PDPT->entries[pdpt_i] = page;
@@ -120,6 +125,8 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
                 if (!(pd_entry & PAGE_PRESENT))
                 {
                     page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();
+                    if (page == 0)
+                        return 1;
                     memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
                     page = page | table_flags;
                     PD->entries[pd_i] = page;
@@ -130,7 +137,7 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
                 page_table_t *PT = (page_table_t *)PHY_TO_VIRT(page_address(pd_entry));
                 for (; pt_i < 512; pt_i++) // Fill up every page table entry until we need a new page directory entry for a new page table
                 {
-                    PT->entries[pt_i] = (phys_address & PAGE_ADDR_MASK) | table_flags | flags;
+                    PT->entries[pt_i] = (phys_address & PAGE_ADDR_MASK) | flags | PAGE_PRESENT;
                     num_pages--;
                     phys_address += PAGE_SIZE;
                     if (num_pages == 0)
@@ -153,6 +160,7 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
         uint64_t entry_type = current->type;
         if (entry_type == LIMINE_MEMMAP_USABLE || entry_type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE || entry_type == LIMINE_MEMMAP_KERNEL_AND_MODULES || entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
         {
+            // TODO: eventually reclaim bootloader memory, first map stack and GDT + IDT
             uint64_t phy_start = PAGE_ALIGN_DOWN(current->base);
             uint64_t phy_end = PAGE_ALIGN_UP(current->base + current->length);
             uint64_t num_pages = (phy_end - phy_start) / PAGE_SIZE;
@@ -216,19 +224,33 @@ uint64_t get_cr3_pml4_address()
     return cr3_val + kernel.hhdm_offset;
 }
 
+static inline void load_cr3(uint64_t pml4_phys)
+{
+    asm volatile("mov %0, %%cr3" ::"r"(pml4_phys) : "memory");
+}
+
 static int test = 123;
 
+// TODO: Unmapping pages
+// TODO: Might need to switch kernel stack and map HHDM?
 void init_paging(void)
 {
-    // TODO: Unmapping pages
-    uint64_t pml4_addr = get_cr3_pml4_address();
-    printf("PML4 Virtual Address: 0x%p\n", pml4_addr);
-    page_table_t *PML4 = (page_table_t *)pml4_addr;
+    uint64_t new_pml4_phys = pmm_alloc_page();
+    if (new_pml4_phys == 0)
+        PANIC("init_paging: Out of physical memory!");
+    page_table_t *PML4 = (void *)PHY_TO_VIRT(new_pml4_phys);
+    memset((void *)PML4, 0, PAGE_SIZE);
 
     struct limine_memmap_entry **entries = kernel.memmap->entries;
     uint32_t entry_count = kernel.memmap->entry_count;
     map_sections(PML4, entry_count, entries);
     map_kernel(PML4, kernel.kernel_pos.physical_base, kernel.kernel_pos.virtual_base);
+
+    uint64_t rsp;
+    asm volatile("mov %%rsp, %0" : "=r"(rsp));
+    printf("Current RSP = 0x%p\n", rsp);
+
+    load_cr3(new_pml4_phys);
 
     printf("Attempting to map virtual address 0x%p to physical address...", &test);
     uint64_t phy_addr = virt_to_physical(PML4, &test);

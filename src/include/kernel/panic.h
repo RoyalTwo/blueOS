@@ -56,3 +56,5 @@ typedef enum
     SIMD_FLOATING_POINT_EXCEPTION = 19,
     VIRTUALIZATION_EXCEPTION = 20,
 } ExceptionType;
+
+void PANIC(char *message);
