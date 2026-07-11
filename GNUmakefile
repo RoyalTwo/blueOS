@@ -77,7 +77,7 @@ src/include/limine.h:
 
 run:
 	./CreateISO.sh
-	qemu-system-x86_64 -serial stdio -cdrom bin/blueOS.iso
+	qemu-system-x86_64 -m 4G -serial stdio -cdrom bin/blueOS.iso
 
 # Link rules for the final kernel executable.
 # The magic printf/dd command is used to force the final ELF file type to ET_DYN.
