@@ -68,7 +68,19 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
 {
     if (num_pages == 0)
         return 0;
-    uint64_t table_flags = PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER; // TODO: Handle permissions. Not every page should be USER perhaps?
+    if (virt_address & (PAGE_SIZE - 1))
+    {
+        printf("Virtual address is not page aligned!\n");
+        return 1;
+    }
+    if (phys_address & (PAGE_SIZE - 1))
+    {
+        printf("Physical address is not page aligned!\n");
+        return 1;
+    }
+    uint64_t table_flags = PAGE_PRESENT | PAGE_WRITABLE;
+    if (flags & PAGE_USER)
+        table_flags |= PAGE_USER;
 
     uint64_t addr = (uint64_t)virt_address;
     size_t pml4_i = (addr >> 39) & 0x1FF;
@@ -118,7 +130,7 @@ int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, 
                 page_table_t *PT = (page_table_t *)PHY_TO_VIRT(page_address(pd_entry));
                 for (; pt_i < 512; pt_i++) // Fill up every page table entry until we need a new page directory entry for a new page table
                 {
-                    PT->entries[pt_i] = (phys_address & PAGE_ADDR_MASK) | flags;
+                    PT->entries[pt_i] = (phys_address & PAGE_ADDR_MASK) | table_flags | flags;
                     num_pages--;
                     phys_address += PAGE_SIZE;
                     if (num_pages == 0)
@@ -141,9 +153,12 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
         uint64_t entry_type = current->type;
         if (entry_type == LIMINE_MEMMAP_USABLE || entry_type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE || entry_type == LIMINE_MEMMAP_KERNEL_AND_MODULES || entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
         {
-            uint64_t num_pages = current->length / PAGE_SIZE;
-            uint64_t virt_addr = current->base + kernel.hhdm_offset;
-            uint64_t phy_addr = current->base;
+            uint64_t phy_start = PAGE_ALIGN_DOWN(current->base);
+            uint64_t phy_end = PAGE_ALIGN_UP(current->base + current->length);
+            uint64_t num_pages = (phy_end - phy_start) / PAGE_SIZE;
+
+            uint64_t virt_addr = phy_start + kernel.hhdm_offset;
+            uint64_t phy_addr = phy_start;
             uint64_t flags = PAGE_PRESENT | PAGE_WRITABLE;
             printf("Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
             if (entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
@@ -168,20 +183,26 @@ uint64_t kernel_end = (uint64_t)l_kernel_end;
 void map_kernel(page_table_t *pml4, uint64_t kernel_physical_base, uint64_t kernel_virtual_base)
 {
     // Map from the start of the kernel to where the writable section starts with the present flag
-    // TODO: Might need to align addresses on pages?
-    int num_of_pages = (kernel_writable_start - kernel_start) / PAGE_SIZE;
-    uint64_t phy_addr_kernel_start = kernel_physical_base + (kernel_start - kernel_virtual_base); // where limine loaded the kernel physically + (offset of kernel_start inside kernel image)
-    printf("Mapping read-only kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, kernel_start, phy_addr_kernel_start);
-    int error = map_pages(pml4, kernel_start, phy_addr_kernel_start, num_of_pages, PAGE_PRESENT);
+    uint64_t virt_start = PAGE_ALIGN_DOWN(kernel_start);
+    uint64_t virt_end = PAGE_ALIGN_UP(kernel_writable_start);
+    int num_of_pages = (virt_end - virt_start) / PAGE_SIZE;
+    uint64_t phy_start = kernel_physical_base + (virt_start - kernel_virtual_base); // where limine loaded the kernel physically + (offset of kernel_start inside kernel image)
+
+    printf("Mapping read-only kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_start);
+    int error = map_pages(pml4, virt_start, phy_start, num_of_pages, PAGE_PRESENT);
     if (!error)
         printf(BGRN "Done!\n" WHT);
     else
         printf(BRED "FAILED\n" WHT);
+
     // Then map from the writable section start to the end of the kernel with present and write flags
-    num_of_pages = (kernel_end - kernel_writable_start) / PAGE_SIZE;
-    uint64_t phy_addr_kernel_writeable_start = kernel_physical_base + (kernel_writable_start - kernel_virtual_base);
-    printf("Mapping writable kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, kernel_writable_start, phy_addr_kernel_writeable_start);
-    error = map_pages(pml4, kernel_writable_start, phy_addr_kernel_writeable_start, num_of_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    virt_start = PAGE_ALIGN_DOWN(kernel_writable_start);
+    virt_end = PAGE_ALIGN_UP(kernel_end);
+    num_of_pages = (virt_end - virt_start) / PAGE_SIZE;
+    uint64_t phy_writable_start = kernel_physical_base + (virt_start - kernel_virtual_base);
+
+    printf("Mapping writable kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_writable_start);
+    error = map_pages(pml4, virt_start, phy_writable_start, num_of_pages, PAGE_PRESENT | PAGE_WRITABLE);
     if (!error)
         printf(BGRN "Done!\n" WHT);
     else
@@ -206,10 +227,9 @@ void init_paging(void)
 
     struct limine_memmap_entry **entries = kernel.memmap->entries;
     uint32_t entry_count = kernel.memmap->entry_count;
-    print_memmap();
-    // print_memmap();
     map_sections(PML4, entry_count, entries);
     map_kernel(PML4, kernel.kernel_pos.physical_base, kernel.kernel_pos.virtual_base);
+
     printf("Attempting to map virtual address 0x%p to physical address...", &test);
     uint64_t phy_addr = virt_to_physical(PML4, &test);
     printf(" Virtual address: 0x%p\n", phy_addr);
