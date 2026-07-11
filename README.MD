@@ -20,6 +20,8 @@ I started this project to learn about how operating systems work, low level conc
 
 ### Goals
 
+(Very incomplete list)
+
 #### General
 
 - [ ] Kernel/Usermode separation
