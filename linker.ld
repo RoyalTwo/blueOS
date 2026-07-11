@@ -7,13 +7,8 @@ ENTRY(kmain)
 
 SECTIONS
 {
-    /* We want to be placed in the topmost 2GiB of the address space, for optimisations */
-    /* and because that is what the Limine spec mandates. */
-    /* Any address in this region will do, but often 0xffffffff80000000 is chosen as */
-    /* that is the beginning of the region. */
-    /* Additionally, leave space for the ELF headers by adding SIZEOF_HEADERS to the */
-    /* base load address. */
     . = 0xffffffff80000000 + SIZEOF_HEADERS;
+    l_kernel_start = .;
 
     .rodata ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.rodata .rodata.*)
@@ -22,7 +17,9 @@ SECTIONS
     .text ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.text .text.*)
     }
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
 
+    l_kernel_writable_start = .;
     .data ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.data .data.*)
 
@@ -46,6 +43,8 @@ SECTIONS
         *(.bss .bss.*)
         *(COMMON)
     }
+    . = ALIGN(CONSTANT(MAXPAGESIZE));
+    l_kernel_end = .;
 
     /* Discard the program interpreter section since we do not need one. This is */
     /* more or less equivalent to the --no-dynamic-linker linker flag, except that it */

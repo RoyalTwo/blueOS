@@ -9,38 +9,38 @@ The kernel is currently being loaded with Limine. I've written a custom bootload
 
 The linker script, makefile, and entry point are provided as part of the Limine standard example. Everything else (the whole kernel) is custom.
 
+## Why?
+
+I started this project to learn about how operating systems work, low level concepts, and low level programming. Since starting, I have learned so much about assembly, processor architecture, memory, etc. and it's been exceedingly helpful to becoming a better and more experienced programmer. Plus, it's very satisfying to watch your own code boot! 😊
+
 ## Running
 
 - Download the [latest ISO](https://github.com/RoyalTwo/blueOS/releases/latest) from the Releases tab (automatically built with every tag)
 - Use `qemu-system-x86_64` to run in a virtual machine or flash to USB with Rufus
 
-### Goals
+## Goals
 
-#### General
+### General
 
 - [ ] Kernel/Usermode separation
 - [ ] Basic shell
 - [ ] GUI
 
-#### CPU
+### CPU
 
 - [x] Global Descriptor Table
 - [x] Interrupt Descriptor Table
 
-#### Drivers
+### Drivers
 
 - [x] Serial
 - [ ] PS/2 Keyboard
 - [ ] File system (FAT32)
 
-#### Memory
+### Memory
 
-- [ ] Paging
+- [x] Paging
 - [ ] Memory management
-
-## Why?
-
-I started this project to learn about how operating systems work, low level concepts, and low level programming. Since starting, I have learned so much about assembly, processor architecture, memory, etc. and it's been exceedingly helpful to becoming a better and more experienced programmer. Plus, it's very satisfying to watch your own code boot! 😊
 
 ## Building
 

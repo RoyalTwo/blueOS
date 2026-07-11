@@ -1,26 +1,31 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <limine.h>
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
 #include <cpu/cpu.h>
 #include <drivers/serial.h>
 #include <printf.h>
+#include <kernel/tty.h>
+#include <kernel/bootutils.h> // Kernel is the only file that should include this header
+#include <kernel/kernel.h>
+#include <mem/mmu.h>
+#include <mem/pmm.h>
 
-// Set base revision to 2, recommended version
-__attribute__((used, section(".requests"))) static volatile LIMINE_BASE_REVISION(6);
+kernel_t kernel;
 
-__attribute__((used, section(".requests"))) static volatile struct limine_framebuffer_request framebuffer_request = {
-    .id = LIMINE_FRAMEBUFFER_REQUEST,
-    .revision = 0};
-
-// Start and end markers for Limine requests, can be moved to any C file
-__attribute__((used, section(".requests_start_marker"))) static volatile LIMINE_REQUESTS_START_MARKER;
-__attribute__((used, section(".requests_end_marker"))) static volatile LIMINE_REQUESTS_END_MARKER;
+void init_kernel_data()
+{
+    // Might need to come back to this to change how we get the framebuffer
+    kernel.framebuffer = framebuffer_request.response->framebuffers[0];
+    kernel.hhdm_offset = hhdm_request.response->offset;
+    kernel.kernel_pos = (struct kernel_positions){
+        .physical_base = kernel_address_request.response->physical_base,
+        .virtual_base = kernel_address_request.response->virtual_base};
+    kernel.memmap = memmap_request.response;
+}
 
 // Kernel entry point
-// TODO: Clean up this file
 void kmain(void)
 {
     // Ensure the bootloader actually understands our base revision (see spec)
@@ -35,12 +40,18 @@ void kmain(void)
         HALT();
     }
 
-    // Fetch the first framebuffer
-    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    init_kernel_data();
+
     init_serial();
-    printf(CLR);
+    printf(CLR WHT);
+    init_pmm();
+    // TODO: eventually, mark other parts of memory as free as well. PMM only marks Usable as free, but after initalializing paging we can reclaim more memory
     gdt_init();
     idt_init();
+    tty_init(kernel.framebuffer);
+    print_string("Framebuffer initialized.\n");
+    print_string("Here's a second line.\n");
+    init_paging();
 
     // Kernel should never exit
     HALT();
