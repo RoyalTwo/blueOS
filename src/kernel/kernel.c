@@ -43,7 +43,7 @@ void kmain(void)
     init_kernel_data();
 
     init_serial();
-    printf(CLR);
+    printf(CLR WHT);
     init_pmm();
     // TODO: eventually, mark other parts of memory as free as well. PMM only marks Usable as free, but after initalializing paging we can reclaim more memory
     gdt_init();

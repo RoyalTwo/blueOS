@@ -45,7 +45,6 @@ uint64_t bump_alloc_pages(uint64_t num_pages)
 {
     if (num_pages == 0)
     {
-        printf("bump_alloc_pages: num_pages = 0\n");
         return 0;
     }
 
@@ -53,13 +52,11 @@ uint64_t bump_alloc_pages(uint64_t num_pages)
 
     if (bumpPMM.current == 0 || bumpPMM.end == 0)
     {
-        printf("bump_alloc_pages: current or end = 0\n");
         return 0;
     }
 
     if (bumpPMM.current + size > bumpPMM.end)
     {
-        printf("bump_alloc_pages: requested size too large (num_pages = %d, size = %d)\n", num_pages, size);
         return 0;
     }
 
@@ -223,25 +220,29 @@ void bitmap_initial_mark_free()
     struct limine_memmap_entry **entries = kernel.memmap->entries;
     for (size_t i = 0; i < entry_count; i++)
     {
-        if (entries[i]->type == LIMINE_MEMMAP_USABLE)
+        if (entries[i]->type == LIMINE_MEMMAP_USABLE) // TODO: Reclaim bootloader reclaimable
             pmm_free_range(entries[i]->base, entries[i]->length);
     }
 }
 
-struct bitmap_allocator create_bitmap(uint64_t num_phy_pages)
+struct bitmap_allocator create_bitmap(uint64_t num_phy_pages, bool verbose)
 {
     uint64_t bitmap_size_bytes = (num_phy_pages + 7) / 8; // + 7 rounds up
     uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;
 
-    printf("PMM: total physical pages = %d\n", num_phy_pages);
-    printf("PMM: bitmap size bytes = %d\n", bitmap_size_bytes);
-    printf("PMM: bitmap size pages = %d\n", bitmap_size_pages);
-    printf("PMM: bump range = 0x%p - 0x%p\n",
-           bumpPMM.current,
-           bumpPMM.end);
+    if (verbose)
+    {
+        printf("PMM: total physical pages = %d\n", num_phy_pages);
+        printf("PMM: bitmap size bytes = %d\n", bitmap_size_bytes);
+        printf("PMM: bitmap size pages = %d\n", bitmap_size_pages);
+        printf("PMM: bump range = 0x%p - 0x%p\n",
+               bumpPMM.current,
+               bumpPMM.end);
+    }
 
     uint64_t bitmap_phys = bump_alloc_pages(bitmap_size_pages);
-    printf("PMM: bitmap_phys = 0x%p\n", bitmap_phys);
+    if (verbose)
+        printf("PMM: bitmap_phys = 0x%p\n", bitmap_phys);
     if (bitmap_phys == 0)
         PANIC("create_bitmap: bump alloc returned 0!");
     uint8_t *pmm_bitmap = (uint8_t *)PHY_TO_VIRT(bitmap_phys);
@@ -258,13 +259,16 @@ struct bitmap_allocator create_bitmap(uint64_t num_phy_pages)
 
 void init_pmm()
 {
+    printf("Initializing PMM...");
     uint64_t num_pages_mem = get_physical_num_pages();
     uint64_t bitmap_size_bytes = (num_pages_mem + 7) / 8;
     uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;
     create_bump_pmm_for_size(bitmap_size_pages); // Only used to initially allocate space for bitmap
 
-    PMM = create_bitmap(num_pages_mem);
+    bool verbose = false;
+    PMM = create_bitmap(num_pages_mem, verbose);
     bitmap_initial_mark_free();
     pmm_reserve_range(PMM.bitmap_phy_addr, PMM.bitmap_size_pages * PAGE_SIZE); // Reserve itself
     pmm_reserve_range(0, PAGE_SIZE);                                           // Returning physical address 0 should look like failure
+    printf(BGRN "Done!\n" WHT);
 }

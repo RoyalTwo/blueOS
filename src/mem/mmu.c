@@ -168,7 +168,7 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
             uint64_t virt_addr = phy_start + kernel.hhdm_offset;
             uint64_t phy_addr = phy_start;
             uint64_t flags = PAGE_PRESENT | PAGE_WRITABLE;
-            printf("Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
+            printf(" Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
             if (entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
                 flags |= PAGE_USER;
             int error = map_pages(pml4, virt_addr, phy_addr, num_pages, flags);
@@ -196,7 +196,7 @@ void map_kernel(page_table_t *pml4, uint64_t kernel_physical_base, uint64_t kern
     int num_of_pages = (virt_end - virt_start) / PAGE_SIZE;
     uint64_t phy_start = kernel_physical_base + (virt_start - kernel_virtual_base); // where limine loaded the kernel physically + (offset of kernel_start inside kernel image)
 
-    printf("Mapping read-only kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_start);
+    printf(" Mapping read-only kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_start);
     int error = map_pages(pml4, virt_start, phy_start, num_of_pages, PAGE_PRESENT);
     if (!error)
         printf(BGRN "Done!\n" WHT);
@@ -209,7 +209,7 @@ void map_kernel(page_table_t *pml4, uint64_t kernel_physical_base, uint64_t kern
     num_of_pages = (virt_end - virt_start) / PAGE_SIZE;
     uint64_t phy_writable_start = kernel_physical_base + (virt_start - kernel_virtual_base);
 
-    printf("Mapping writable kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_writable_start);
+    printf(" Mapping writable kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_writable_start);
     error = map_pages(pml4, virt_start, phy_writable_start, num_of_pages, PAGE_PRESENT | PAGE_WRITABLE);
     if (!error)
         printf(BGRN "Done!\n" WHT);
@@ -235,6 +235,7 @@ static int test = 123;
 // TODO: Might need to switch kernel stack and map HHDM?
 void init_paging(void)
 {
+    printf("Transferring paging...\n");
     uint64_t new_pml4_phys = pmm_alloc_page();
     if (new_pml4_phys == 0)
         PANIC("init_paging: Out of physical memory!");
@@ -246,13 +247,10 @@ void init_paging(void)
     map_sections(PML4, entry_count, entries);
     map_kernel(PML4, kernel.kernel_pos.physical_base, kernel.kernel_pos.virtual_base);
 
-    uint64_t rsp;
-    asm volatile("mov %%rsp, %0" : "=r"(rsp));
-    printf("Current RSP = 0x%p\n", rsp);
-
     load_cr3(new_pml4_phys);
 
-    printf("Attempting to map virtual address 0x%p to physical address...", &test);
+    printf(" Attempting to map virtual address 0x%p to physical address...", &test);
     uint64_t phy_addr = virt_to_physical(PML4, &test);
     printf(" Virtual address: 0x%p\n", phy_addr);
+    printf(BGRN "...Done!\n" WHT);
 }
