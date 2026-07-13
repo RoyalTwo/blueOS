@@ -590,6 +590,7 @@ void *krealloc(void *ptr, size_t new_size)
     return new_ptr;
 }
 
+// TODO: Add slab allocator for small allocations; free-lists can be suboptimal performance-wise
 void init_heap(void)
 {
     if (heap_initialized)
