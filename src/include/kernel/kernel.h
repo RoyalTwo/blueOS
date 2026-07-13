@@ -1,6 +1,7 @@
 #pragma once
 #include <limine.h>
 #include <stdint.h>
+#include <mem/mmu.h>
 
 struct kernel_positions
 {
@@ -15,6 +16,7 @@ typedef struct
     struct limine_memmap_response *memmap;
     uint64_t hhdm_offset;
     struct kernel_positions kernel_pos;
+    page_table_t *PML4;
 } kernel_t;
 
 extern kernel_t kernel;

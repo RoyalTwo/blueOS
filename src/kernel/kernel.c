@@ -11,6 +11,7 @@
 #include <kernel/kernel.h>
 #include <mem/mmu.h>
 #include <mem/pmm.h>
+#include <mem/heap.h>
 
 kernel_t kernel;
 
@@ -45,13 +46,14 @@ void kmain(void)
     init_serial();
     printf(CLR WHT);
     init_pmm();
-    // TODO: eventually, mark other parts of memory as free as well. PMM only marks Usable as free, but after initalializing paging we can reclaim more memory
+    // TODO: eventually, mark other parts of memory as free as well. PMM only marks Usable as free, but after initializing paging we can reclaim more memory
     gdt_init();
     idt_init();
     tty_init(kernel.framebuffer);
     print_string("Framebuffer initialized.\n");
     print_string("Here's a second line.\n");
     init_paging();
+    init_heap();
 
     // Kernel should never exit
     HALT();

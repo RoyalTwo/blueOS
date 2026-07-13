@@ -40,7 +40,8 @@ I started this project to learn about how operating systems work, low level conc
 ### Memory
 
 - [x] Paging
-- [ ] Memory management
+- [x] Physical memory manager
+- [x] Dynamic heap allocation (kmalloc)
 
 ## Building
 
