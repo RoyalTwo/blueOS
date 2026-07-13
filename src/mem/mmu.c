@@ -59,7 +59,7 @@ uint64_t virt_to_physical(page_table_t *pml4, void *virt_address)
     return phy_addr;
 }
 
-int map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, uint64_t num_pages, uint64_t flags)
+int paging_map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, uint64_t num_pages, uint64_t flags)
 {
     if (num_pages == 0)
         return 0;
@@ -164,7 +164,7 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
             printf(RARROW "Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
             if (entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
                 flags |= PAGE_USER;
-            int error = map_pages(pml4, virt_addr, phy_addr, num_pages, flags);
+            int error = paging_map_pages(pml4, virt_addr, phy_addr, num_pages, flags);
             if (!error)
                 printf(BGRN "Done!\n" WHT);
             else
@@ -190,7 +190,7 @@ void map_kernel(page_table_t *pml4, uint64_t kernel_physical_base, uint64_t kern
     uint64_t phy_start = kernel_physical_base + (virt_start - kernel_virtual_base); // where limine loaded the kernel physically + (offset of kernel_start inside kernel image)
 
     printf(RARROW "Mapping read-only kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_start);
-    int error = map_pages(pml4, virt_start, phy_start, num_of_pages, PAGE_PRESENT);
+    int error = paging_map_pages(pml4, virt_start, phy_start, num_of_pages, PAGE_PRESENT);
     if (!error)
         printf(BGRN "Done!\n" WHT);
     else
@@ -203,7 +203,7 @@ void map_kernel(page_table_t *pml4, uint64_t kernel_physical_base, uint64_t kern
     uint64_t phy_writable_start = kernel_physical_base + (virt_start - kernel_virtual_base);
 
     printf(RARROW "Mapping writable kernel section with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", num_of_pages, virt_start, phy_writable_start);
-    error = map_pages(pml4, virt_start, phy_writable_start, num_of_pages, PAGE_PRESENT | PAGE_WRITABLE);
+    error = paging_map_pages(pml4, virt_start, phy_writable_start, num_of_pages, PAGE_PRESENT | PAGE_WRITABLE);
     if (!error)
         printf(BGRN "Done!\n" WHT);
     else
@@ -222,22 +222,20 @@ static inline void load_cr3(uint64_t pml4_phys)
     asm volatile("mov %0, %%cr3" ::"r"(pml4_phys) : "memory");
 }
 
-// VMM assumes that paging has been enabled and kernel.PML4 points to the top page table
 // Returns physical address of mapped page
 // Returns 0 if failed
-uint64_t vmm_map_page(uint64_t vaddr, uint64_t flags)
+uint64_t vmm_map_page(page_table_t *pml4, uint64_t vaddr, uint64_t flags)
 {
     size_t pml4_i = (vaddr >> 39) & 0x1FF;
     size_t pdpt_i = (vaddr >> 30) & 0x1FF;
     size_t pd_i = (vaddr >> 21) & 0x1FF;
     size_t pt_i = (vaddr >> 12) & 0x1FF;
-    size_t page_offset = vaddr & 0xFFFU;
 
     uint64_t table_flags = PAGE_PRESENT | PAGE_WRITABLE;
     if (flags & PAGE_USER)
         table_flags |= PAGE_USER;
 
-    page_table_entry_t pml4_entry = kernel.PML4->entries[pml4_i];
+    page_table_entry_t pml4_entry = pml4->entries[pml4_i];
     if (!(pml4_entry & PAGE_PRESENT))
     {
         page_table_entry_t page = (page_table_entry_t)pmm_alloc_page();

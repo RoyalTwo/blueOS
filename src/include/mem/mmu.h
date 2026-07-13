@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #define PHY_TO_VIRT(physical) (physical + kernel.hhdm_offset) // Requires <kernel/kernel.h> included
 #define PAGE_ADDR_MASK 0x000FFFFFFFFFF000ULL
 
@@ -15,3 +17,6 @@ typedef struct __attribute((packed))
 } page_table_t;
 
 void init_paging(void);
+uint64_t vmm_map_page(page_table_t *pml4, uint64_t vaddr, uint64_t flags);
+// Return value is 0 for success, 1 for error
+int paging_map_pages(page_table_t *pml4, uint64_t virt_address, uint64_t phys_address, uint64_t num_pages, uint64_t flags);
