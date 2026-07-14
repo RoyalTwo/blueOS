@@ -19,7 +19,7 @@ override KNASM_FLAGS := -F dwarf -g
 override KLDFLAGS :=
 
 # Include directory for kernel. TODO: Use more robust system for folder separation
-override INCLUDE_DIR := src/include/
+override INCLUDE_DIR := include
 
 # Internal C flags, should NOT be changed
 override KCFLAGS += \
@@ -40,7 +40,7 @@ override KCFLAGS += \
 
 # Internal C preprocessor flags, should NOT be changed
 override KCPPFLAGS := \
-	-I $(INCLUDE_DIR) \
+	-I $(INCLUDE_DIR)/ \
 	$(KCPPFLAGS) \
 	-MMD \
 	-MP
@@ -72,7 +72,7 @@ override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 .PHONY: all
 all: bin/$(KERNEL)
 
-src/include/limine.h:
+$(INCLUDE_DIR)/limine.h:
 	curl -Lo $@ https://github.com/limine-bootloader/limine/raw/trunk/limine.h
 
 run:
@@ -93,7 +93,7 @@ bin/$(KERNEL): GNUmakefile linker.ld $(OBJ)
 -include $(HEADER_DEPS)
 
 # Compilation rules for *.c files
-obj/%.c.o: src/%.c GNUmakefile src/include/limine.h
+obj/%.c.o: src/%.c GNUmakefile $(INCLUDE_DIR)/limine.h
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 
@@ -114,4 +114,4 @@ clean:
 
 .PHONY: distclean
 distclean: clean
-	rm -f src/limine.h
+	rm -f $(INCLUDE_DIR)/limine.h
