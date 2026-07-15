@@ -7,12 +7,6 @@
 #include <kernel/panic.h>
 #include <limine.h>
 
-#define PAGE_PRESENT (1ULL << 0)
-#define PAGE_WRITABLE (1ULL << 1)
-#define PAGE_USER (1ULL << 2)
-#define PAGE_HUGE (1ULL << 7)
-#define PAGE_NX (1ULL << 63)
-
 static inline uintptr_t page_address(page_table_entry_t entry)
 {
     return entry & 0x000FFFFFFFFFF000ULL;

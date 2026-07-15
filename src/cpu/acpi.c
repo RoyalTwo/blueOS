@@ -233,7 +233,7 @@ bool parse_madt(const madt_t *MADT)
         (const uint8_t *)MADT + MADT->header.length;
 
     printf("-MADT-\n");
-    printf("Core Local APIC Address: 0x%p\n", MADT->local_apic_address);
+    printf("Core Local APIC Physical Address: 0x%p\n", MADT->local_apic_address);
     while (current < end)
     {
         size_t remaining = (size_t)(end - current);
