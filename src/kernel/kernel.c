@@ -4,6 +4,7 @@
 #include <cpu/gdt.h>
 #include <cpu/idt.h>
 #include <cpu/cpu.h>
+#include <cpu/acpi.h>
 #include <drivers/serial.h>
 #include <printf.h>
 #include <kernel/tty.h>
@@ -24,6 +25,7 @@ void init_kernel_data()
         .physical_base = kernel_address_request.response->physical_base,
         .virtual_base = kernel_address_request.response->virtual_base};
     kernel.memmap = memmap_request.response;
+    kernel.rsdp_address = rsdp_request.response->address;
 }
 
 // Kernel entry point
@@ -54,6 +56,7 @@ void kmain(void)
     print_string("Here's a second line.\n");
     init_paging();
     init_heap();
+    parse_rsdp();
 
     // Kernel should never exit
     HALT();

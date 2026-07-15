@@ -151,7 +151,15 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
     {
         struct limine_memmap_entry *current = memmap_entries[i];
         uint64_t entry_type = current->type;
-        if (entry_type == LIMINE_MEMMAP_USABLE || entry_type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE || entry_type == LIMINE_MEMMAP_KERNEL_AND_MODULES || entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
+#define LIMINE_MEMMAP_RESERVED_MAPPED 8 // Inexplicably, limine.h does not have this defined even though it should
+                                        // TODO: Figure that out?
+        if (entry_type == LIMINE_MEMMAP_USABLE ||
+            entry_type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE ||
+            entry_type == LIMINE_MEMMAP_KERNEL_AND_MODULES ||
+            entry_type == LIMINE_MEMMAP_FRAMEBUFFER ||
+            entry_type == LIMINE_MEMMAP_ACPI_RECLAIMABLE ||
+            entry_type == LIMINE_MEMMAP_ACPI_NVS ||
+            entry_type == LIMINE_MEMMAP_RESERVED_MAPPED)
         {
             // TODO: eventually reclaim bootloader memory, first map stack and GDT + IDT
             uint64_t phy_start = PAGE_ALIGN_DOWN(current->base);
@@ -162,8 +170,8 @@ void map_sections(page_table_t *pml4, uint64_t memmap_entry_count, struct limine
             uint64_t phy_addr = phy_start;
             uint64_t flags = PAGE_PRESENT | PAGE_WRITABLE;
             printf(RARROW "Mapping memory entry %d (type %d) with (%d pages, virtual_address = 0x%p, physical_address = 0x%p)...", i, entry_type, num_pages, virt_addr, phy_addr);
-            if (entry_type == LIMINE_MEMMAP_FRAMEBUFFER)
-                flags |= PAGE_USER;
+            if (entry_type == LIMINE_MEMMAP_ACPI_NVS || entry_type == LIMINE_MEMMAP_ACPI_RECLAIMABLE)
+                flags = PAGE_PRESENT; // not writable
             int error = paging_map_pages(pml4, virt_addr, phy_addr, num_pages, flags);
             if (!error)
                 printf(BGRN "Done!\n" WHT);
@@ -224,7 +232,7 @@ static inline void load_cr3(uint64_t pml4_phys)
 
 // Returns physical address of mapped page
 // Returns 0 if failed
-uint64_t vmm_map_page(page_table_t *pml4, uint64_t vaddr, uint64_t flags)
+uint64_t vmm_allocate_page(page_table_t *pml4, uint64_t vaddr, uint64_t flags)
 {
     size_t pml4_i = (vaddr >> 39) & 0x1FF;
     size_t pdpt_i = (vaddr >> 30) & 0x1FF;
@@ -243,7 +251,7 @@ uint64_t vmm_map_page(page_table_t *pml4, uint64_t vaddr, uint64_t flags)
             return 0;
         memset((void *)PHY_TO_VIRT(page), 0, PAGE_SIZE);
         page = page | table_flags;
-        kernel.PML4->entries[pml4_i] = page;
+        pml4->entries[pml4_i] = page;
         pml4_entry = page;
     }
     page_table_t *PDPT = (page_table_t *)PHY_TO_VIRT(page_address(pml4_entry));
