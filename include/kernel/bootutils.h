@@ -19,5 +19,9 @@ __attribute__((used, section(".requests"))) static volatile struct limine_kernel
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
     .revision = 0};
 
+__attribute__((used, section(".requests"))) static volatile struct limine_rsdp_request rsdp_request = {
+    .id = LIMINE_RSDP_REQUEST,
+    .revision = 0};
+
 __attribute__((used, section(".requests_start_marker"))) static volatile LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".requests_end_marker"))) static volatile LIMINE_REQUESTS_END_MARKER;

@@ -71,6 +71,23 @@ size_t strlen(const char *str)
     return (s - str);
 }
 
+int strncmp(const char *left, const char *right, size_t count)
+{
+    for (size_t i = 0; i < count; i++)
+    {
+        unsigned char l = (unsigned char)left[i];
+        unsigned char r = (unsigned char)right[i];
+
+        if (l != r)
+            return (int)l - (int)r;
+
+        if (l == '\0')
+            return 0;
+    }
+
+    return 0;
+}
+
 void reverse(char str[], int length)
 {
     int start = 0;

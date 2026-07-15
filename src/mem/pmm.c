@@ -260,6 +260,7 @@ struct bitmap_allocator create_bitmap(uint64_t num_phy_pages, bool verbose)
 void init_pmm()
 {
     printf("Initializing PMM...");
+    print_memmap();
     uint64_t num_pages_mem = get_physical_num_pages();
     uint64_t bitmap_size_bytes = (num_pages_mem + 7) / 8;
     uint64_t bitmap_size_pages = PAGE_ALIGN_UP(bitmap_size_bytes) / PAGE_SIZE;

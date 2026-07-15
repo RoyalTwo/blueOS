@@ -20,7 +20,7 @@ void handle_exception(InterruptFrame frame)
     printf("    An exception has occurred and execution cannot continue.\n");
     printf(BWHT "- Debug Info -\n" WHT);
     printf("    Interrupt Index: %d\n", frame.interrupt_number);
-    printf("    Error Code: %d\n", frame.error_code);
+    printf("    Error Code: %d (0b%b)\n", frame.error_code, frame.error_code);
     printf(BWHT "- Register Dump -\n" WHT);
     printf("    CR2: " YEL "0x%p\n" WHT, frame.cr2);
     printf("    RSP: " YEL "0x%p" WHT "   |   RAX: " YEL "0x%p\n" WHT, frame.rsp, frame.rax);

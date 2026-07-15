@@ -608,7 +608,7 @@ void init_heap(void)
     {
         uintptr_t virtual_address =
             heap_start() + i * PAGE_SIZE;
-        if (!vmm_map_page(
+        if (!vmm_allocate_page(
                 kernel.PML4,
                 virtual_address,
                 0))
