@@ -6,6 +6,7 @@
 #include <cpu/cpu.h>
 #include <cpu/acpi.h>
 #include <drivers/serial.h>
+#include <drivers/pic.h>
 #include <printf.h>
 #include <kernel/tty.h>
 #include <kernel/bootutils.h> // Kernel is the only file that should include this header
@@ -57,6 +58,7 @@ void kmain(void)
     init_paging();
     init_heap();
     parse_rsdp();
+    disable_pic();
 
     // Kernel should never exit
     HALT();
